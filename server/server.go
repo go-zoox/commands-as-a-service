@@ -11,7 +11,6 @@ type Server interface {
 }
 
 type Config struct {
-	Version     string
 	Port        int64
 	Shell       string
 	Context     string

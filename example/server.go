@@ -1,4 +1,4 @@
-package commands
+package main
 
 import (
 	"github.com/go-zoox/cli"
@@ -56,7 +56,6 @@ func RegistryServer(app *cli.MultipleProgram) {
 		},
 		Action: func(ctx *cli.Context) (err error) {
 			return server.Serve(&server.Config{
-				Version:      ctx.App.Version,
 				Port:         ctx.Int64("port"),
 				Shell:        ctx.String("shell"),
 				Context:      ctx.String("context"),

@@ -1,4 +1,4 @@
-package commands
+package main
 
 import (
 	"fmt"
@@ -62,7 +62,6 @@ func RegistryClient(app *cli.MultipleProgram) {
 			}
 
 			return client.Run(&client.Config{
-				Version:      ctx.App.Version,
 				Server:       ctx.String("server"),
 				Script:       script,
 				ClientID:     ctx.String("client-id"),

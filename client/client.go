@@ -19,7 +19,6 @@ type Client interface {
 }
 
 type Config struct {
-	Version      string
 	Server       string
 	Script       string
 	Environment  map[string]string

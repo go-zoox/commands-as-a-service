@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 
+	caas "github.com/go-zoox/commands-as-a-service"
 	"github.com/go-zoox/fetch"
 )
 
@@ -43,7 +44,7 @@ func createAuthenticator(cfg *Config) func(clientID, clientSecret string) (err e
 			response, err := fetch.Post(cfg.AuthService, &fetch.Config{
 				Headers: fetch.Headers{
 					"Content-Type":    "application/json",
-					"User-Agent":      fmt.Sprintf("caas/%s", cfg.Version),
+					"User-Agent":      fmt.Sprintf("caas/%s", caas.Version),
 					"X-Client-ID":     clientID,
 					"X-Client-Secret": clientSecret,
 				},
