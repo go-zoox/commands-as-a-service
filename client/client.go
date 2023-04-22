@@ -14,10 +14,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Client is the interface of caas client
 type Client interface {
-	Run(cfg *Config) error
+	Run() error
 }
 
+// Config is the configuration of caas client
 type Config struct {
 	Server       string
 	Script       string
@@ -26,8 +28,18 @@ type Config struct {
 	ClientSecret string
 }
 
-func Run(cfg *Config) (err error) {
-	u, err := url.Parse(cfg.Server)
+func New(cfg *Config) Client {
+	return &client{
+		cfg: cfg,
+	}
+}
+
+type client struct {
+	cfg *Config
+}
+
+func (c *client) Run() (err error) {
+	u, err := url.Parse(c.cfg.Server)
 	if err != nil {
 		return fmt.Errorf("invalid caas server address: %s", err)
 	}
@@ -65,8 +77,8 @@ func Run(cfg *Config) (err error) {
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		authRequest := &entities.AuthRequest{
-			ClientID:     cfg.ClientID,
-			ClientSecret: cfg.ClientSecret,
+			ClientID:     c.cfg.ClientID,
+			ClientSecret: c.cfg.ClientSecret,
 		}
 		message, err := json.Marshal(authRequest)
 		if err != nil {
@@ -99,8 +111,8 @@ func Run(cfg *Config) (err error) {
 		case entities.MessageAuthResponseSuccess:
 			// command request
 			commandRequest := &entities.CommandRequest{
-				Script:      cfg.Script,
-				Environment: cfg.Environment,
+				Script:      c.cfg.Script,
+				Environment: c.cfg.Environment,
 			}
 			message, err = json.Marshal(commandRequest)
 			if err != nil {

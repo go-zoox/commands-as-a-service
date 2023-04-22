@@ -55,14 +55,16 @@ func RegistryServer(app *cli.MultipleProgram) {
 			},
 		},
 		Action: func(ctx *cli.Context) (err error) {
-			return server.Serve(&server.Config{
-				Port:         ctx.Int64("port"),
-				Shell:        ctx.String("shell"),
-				Context:      ctx.String("context"),
-				Timeout:      ctx.Int64("timeout"),
-				ClientID:     ctx.String("client-id"),
-				ClientSecret: ctx.String("client-secret"),
-			})
+			return server.
+				New(&server.Config{
+					Port:         ctx.Int64("port"),
+					Shell:        ctx.String("shell"),
+					Context:      ctx.String("context"),
+					Timeout:      ctx.Int64("timeout"),
+					ClientID:     ctx.String("client-id"),
+					ClientSecret: ctx.String("client-secret"),
+				}).
+				Run()
 		},
 	})
 }

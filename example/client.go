@@ -61,12 +61,14 @@ func RegistryClient(app *cli.MultipleProgram) {
 				return fmt.Errorf("script is required")
 			}
 
-			return client.Run(&client.Config{
-				Server:       ctx.String("server"),
-				Script:       script,
-				ClientID:     ctx.String("client-id"),
-				ClientSecret: ctx.String("client-secret"),
-			})
+			return client.
+				New(&client.Config{
+					Server:       ctx.String("server"),
+					Script:       script,
+					ClientID:     ctx.String("client-id"),
+					ClientSecret: ctx.String("client-secret"),
+				}).
+				Run()
 		},
 	})
 }

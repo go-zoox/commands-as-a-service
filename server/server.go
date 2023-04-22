@@ -7,7 +7,7 @@ import (
 )
 
 type Server interface {
-	Run(cfg *Config) error
+	Run() error
 }
 
 type Config struct {
@@ -23,25 +23,19 @@ type Config struct {
 }
 
 type server struct {
+	cfg *Config
 }
 
-func NewServer() Server {
-	return &server{}
+func New(cfg *Config) Server {
+	return &server{
+		cfg: cfg,
+	}
 }
 
-func Serve(cfg *Config) error {
-	s := NewServer()
-	return s.Run(cfg)
-}
-
-func (s *server) Run(cfg *Config) error {
+func (s *server) Run() error {
 	app := defaults.Application()
 
-	// if cfg.ClientID != "" && cfg.ClientSecret != "" {
-	// 	app.Use(createAuthMiddleware(cfg))
-	// }
+	app.WebSocket("/ws", createWsService(s.cfg))
 
-	app.WebSocket("/ws", createWsService(cfg))
-
-	return app.Run(fmt.Sprintf("0.0.0.0:%d", cfg.Port))
+	return app.Run(fmt.Sprintf("0.0.0.0:%d", s.cfg.Port))
 }
