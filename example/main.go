@@ -11,9 +11,9 @@ func main() {
 	})
 
 	// server
-	RegistryServer(app)
+	registryServer(app)
 	// client
-	RegistryClient(app)
+	registryClient(app)
 
 	app.Run()
 }

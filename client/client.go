@@ -28,14 +28,15 @@ type Config struct {
 	ClientSecret string
 }
 
+type client struct {
+	cfg *Config
+}
+
+// New creates a new caas client
 func New(cfg *Config) Client {
 	return &client{
 		cfg: cfg,
 	}
-}
-
-type client struct {
-	cfg *Config
 }
 
 func (c *client) Run() (err error) {

@@ -8,7 +8,7 @@ import (
 	"github.com/go-zoox/fs"
 )
 
-func RegistryClient(app *cli.MultipleProgram) {
+func registryClient(app *cli.MultipleProgram) {
 	app.Register("client", &cli.Command{
 		Name:  "client",
 		Usage: "commands as a service client",
@@ -50,11 +50,12 @@ func RegistryClient(app *cli.MultipleProgram) {
 					return fmt.Errorf("script path not found: %s", scriptPath)
 				}
 
-				if scriptText, err := fs.ReadFileAsString(scriptPath); err != nil {
+				scriptText, err := fs.ReadFileAsString(scriptPath)
+				if err != nil {
 					return fmt.Errorf("failed to read script file: %s", err)
-				} else {
-					script = scriptText
 				}
+
+				script = scriptText
 			}
 
 			if script == "" {

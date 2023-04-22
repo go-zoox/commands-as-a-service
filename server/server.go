@@ -6,10 +6,12 @@ import (
 	"github.com/go-zoox/zoox/defaults"
 )
 
+// Server is the server interface of caas
 type Server interface {
 	Run() error
 }
 
+// Config is the configuration of caas server
 type Config struct {
 	Port        int64
 	Shell       string
@@ -26,6 +28,7 @@ type server struct {
 	cfg *Config
 }
 
+// New creates a new caas server
 func New(cfg *Config) Server {
 	return &server{
 		cfg: cfg,

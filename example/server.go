@@ -5,7 +5,7 @@ import (
 	"github.com/go-zoox/commands-as-a-service/server"
 )
 
-func RegistryServer(app *cli.MultipleProgram) {
+func registryServer(app *cli.MultipleProgram) {
 	app.Register("server", &cli.Command{
 		Name:  "server",
 		Usage: "commands as a service server",

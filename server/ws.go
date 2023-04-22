@@ -14,6 +14,7 @@ import (
 	gw "github.com/gorilla/websocket"
 )
 
+// WSClientWriter is the writer for websocket client
 type WSClientWriter struct {
 	io.Writer
 	Client *websocket.WebSocketClient
