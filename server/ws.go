@@ -27,11 +27,24 @@ func (w WSClientWriter) Write(p []byte) (n int, err error) {
 
 func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebSocketClient) {
 	heartbeatTimeout := 30 * time.Second
+	authenticator := createAuthenticator(cfg)
+
 	return func(ctx *zoox.Context, client *websocket.WebSocketClient) {
 		var cmd *exec.Cmd
+		var authClient *entities.AuthRequest
+		var command *entities.CommandRequest
+
+		isAuthenticated := false
 		stopped := false
 		isKilledByDisconnect := false
 
+		authenticationTimeoutTimer := time.AfterFunc(30*time.Second, func() {
+			if !isAuthenticated {
+				logger.Debugf("[ws][id: %s] authentication timeout", client.ID)
+
+				client.Disconnect()
+			}
+		})
 		heartbeatTimeoutTimer := time.AfterFunc(heartbeatTimeout, func() {
 			logger.Debugf("[ws][id: %s] heart beat timeout", client.ID)
 
@@ -57,23 +70,52 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 			case entities.MessagePing:
 				logger.Debugf("[ws][id: %s] receive ping", client.ID)
 				heartbeatTimeoutTimer.Reset(heartbeatTimeout)
-			case entities.MessageCommand:
-				data := &entities.CommandRequest{}
-				if err := json.Unmarshal(msg[1:], data); err != nil {
-					logger.Errorf("failed to unmarshal command request: %s", err)
+				return
+			case entities.MessageAuthRequest:
+				logger.Infof("[ws][id: %s] auth request", client.ID)
+				authClient = &entities.AuthRequest{}
+				if err := json.Unmarshal(msg[1:], authClient); err != nil {
+					logger.Errorf("[ws][id: %s] failed to unmarshal auth request: %s", client.ID, err)
+					return
+				}
+				authenticationTimeoutTimer.Stop()
+				if err := authenticator(authClient.ClientID, authClient.ClientSecret); err != nil {
+					logger.Errorf("[ws][id: %s] failed to authenticate => %v", client.ID, err)
 
-					client.WriteBinary(append([]byte{entities.Stderr}, []byte("invalid command request")...))
-					client.WriteBinary([]byte{entities.ExitCode, byte(1)})
+					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to authenticate: %s\n", err))...))
+					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
 				}
 
-				cmd = exec.Command(cfg.Shell, "-c", data.Script)
+				isAuthenticated = true
+				logger.Infof("[ws][id: %s] %s authenticated", client.ID, cfg.ClientSecret)
+				client.WriteBinary([]byte{entities.MessageAuthResponseSuccess})
+			case entities.MessageCommand:
+				if !isAuthenticated {
+					logger.Errorf("[ws][id: %s] not authenticated", client.ID)
+					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("not authenticated\n")...))
+					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.Disconnect()
+					return
+				}
+
+				command = &entities.CommandRequest{}
+				if err := json.Unmarshal(msg[1:], command); err != nil {
+					logger.Errorf("failed to unmarshal command request: %s", err)
+
+					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("invalid command request\n")...))
+					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.Disconnect()
+					return
+				}
+
+				cmd = exec.Command(cfg.Shell, "-c", command.Script)
 				cmd.Dir = cfg.Context
 				// cmd.Env = []string{}
 				environment := map[string]string{}
-				if data.Environment != nil {
-					for k, v := range data.Environment {
+				if command.Environment != nil {
+					for k, v := range command.Environment {
 						environment[k] = v
 					}
 				}
@@ -91,21 +133,21 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					cmd.Process.Kill()
 				})
 
-				cmd.Stdout = &WSClientWriter{Client: client, Flag: entities.Stdout}
-				cmd.Stderr = &WSClientWriter{Client: client, Flag: entities.Stderr}
+				cmd.Stdout = &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout}
+				cmd.Stderr = &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr}
 
-				logger.Infof("[command] start to run: %s", data.Script)
+				logger.Infof("[command] start to run: %s", command.Script)
 				err := cmd.Run()
 				if err != nil {
 					if isKilledByDisconnect {
-						logger.Infof("[command] killed by disconnect: %s", data.Script)
+						logger.Infof("[command] killed by disconnect: %s", command.Script)
 						return
 					}
 
-					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", data.Script, err, cmd.ProcessState.ExitCode())
-					client.WriteBinary([]byte{entities.ExitCode, byte(cmd.ProcessState.ExitCode())})
+					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", command.Script, err, cmd.ProcessState.ExitCode())
+					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
 				}
-				logger.Infof("[command] succeed to run: %s", data.Script)
+				logger.Infof("[command] succeed to run: %s", command.Script)
 
 				commandTimeoutTimer.Stop()
 				heartbeatTimeoutTimer.Stop()

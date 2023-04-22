@@ -37,14 +37,14 @@ func RegistryServer(app *cli.MultipleProgram) {
 				EnvVars: []string{"CAAS_ENVIRONMENT"},
 			},
 			&cli.StringFlag{
-				Name:    "username",
-				Usage:   "Username for Basic Auth",
-				EnvVars: []string{"CAAS_USERNAME"},
+				Name:    "client-id",
+				Usage:   "Auth Client ID",
+				EnvVars: []string{"CAAS_CLIENT_ID"},
 			},
 			&cli.StringFlag{
-				Name:    "password",
-				Usage:   "Password for Basic Auth",
-				EnvVars: []string{"CAAS_PASSWORD"},
+				Name:    "client-secret",
+				Usage:   "Auth Client Secret",
+				EnvVars: []string{"CAAS_CLIENT_SECRET"},
 			},
 			&cli.Int64Flag{
 				Name:    "timeout",
@@ -56,12 +56,13 @@ func RegistryServer(app *cli.MultipleProgram) {
 		},
 		Action: func(ctx *cli.Context) (err error) {
 			return server.Serve(&server.Config{
-				Port:     ctx.Int64("port"),
-				Shell:    ctx.String("shell"),
-				Context:  ctx.String("context"),
-				Timeout:  ctx.Int64("timeout"),
-				Username: ctx.String("username"),
-				Password: ctx.String("password"),
+				Version:      ctx.App.Version,
+				Port:         ctx.Int64("port"),
+				Shell:        ctx.String("shell"),
+				Context:      ctx.String("context"),
+				Timeout:      ctx.Int64("timeout"),
+				ClientID:     ctx.String("client-id"),
+				ClientSecret: ctx.String("client-secret"),
 			})
 		},
 	})

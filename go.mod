@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-zoox/cli v1.2.1
+	github.com/go-zoox/fetch v1.7.6
 	github.com/go-zoox/fs v1.3.9
 	github.com/go-zoox/logger v1.4.4
 	github.com/go-zoox/zoox v1.9.6
@@ -29,7 +30,6 @@ require (
 	github.com/go-zoox/dotenv v1.2.3 // indirect
 	github.com/go-zoox/encoding v1.2.1 // indirect
 	github.com/go-zoox/errors v1.0.2 // indirect
-	github.com/go-zoox/fetch v1.7.6 // indirect
 	github.com/go-zoox/gzip v1.0.0 // indirect
 	github.com/go-zoox/headers v1.0.6 // indirect
 	github.com/go-zoox/jobqueue v1.0.0 // indirect

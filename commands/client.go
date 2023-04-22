@@ -27,14 +27,14 @@ func RegistryClient(app *cli.MultipleProgram) {
 				// Required: true,
 			},
 			&cli.StringFlag{
-				Name:    "username",
-				Usage:   "Username for Basic Auth",
-				EnvVars: []string{"CAAS_USERNAME"},
+				Name:    "client-id",
+				Usage:   "Auth Client ID",
+				EnvVars: []string{"CAAS_CLIENT_ID"},
 			},
 			&cli.StringFlag{
-				Name:    "password",
-				Usage:   "Password for Basic Auth",
-				EnvVars: []string{"CAAS_PASSWORD"},
+				Name:    "client-secret",
+				Usage:   "Auth Client Secret",
+				EnvVars: []string{"CAAS_CLIENT_SECRET"},
 			},
 			//
 			&cli.StringFlag{
@@ -62,10 +62,11 @@ func RegistryClient(app *cli.MultipleProgram) {
 			}
 
 			return client.Run(&client.Config{
-				Server:   ctx.String("server"),
-				Script:   script,
-				Username: ctx.String("username"),
-				Password: ctx.String("password"),
+				Version:      ctx.App.Version,
+				Server:       ctx.String("server"),
+				Script:       script,
+				ClientID:     ctx.String("client-id"),
+				ClientSecret: ctx.String("client-secret"),
 			})
 		},
 	})

@@ -19,11 +19,12 @@ type Client interface {
 }
 
 type Config struct {
-	Server      string
-	Script      string
-	Environment map[string]string
-	Username    string
-	Password    string
+	Version      string
+	Server       string
+	Script       string
+	Environment  map[string]string
+	ClientID     string
+	ClientSecret string
 }
 
 func Run(cfg *Config) (err error) {
@@ -35,12 +36,16 @@ func Run(cfg *Config) (err error) {
 
 	client, response, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		body, errB := ioutil.ReadAll(response.Body)
-		if errB != nil {
-			return fmt.Errorf("failed to connect websocket at %s (status: %s, error: %s)", u.String(), response.Status, err)
+		if response == nil || response.Body == nil {
+			return fmt.Errorf("failed to connect at %s (error: %s)", u.String(), err)
 		}
 
-		return fmt.Errorf("failed to connect websocket at %s (status: %d, response: %s, error: %v)", u.String(), response.StatusCode, string(body), err)
+		body, errB := ioutil.ReadAll(response.Body)
+		if errB != nil {
+			return fmt.Errorf("failed to connect at %s (status: %s, error: %s)", u.String(), response.Status, err)
+		}
+
+		return fmt.Errorf("failed to connect at %s (status: %d, response: %s, error: %v)", u.String(), response.StatusCode, string(body), err)
 	}
 	defer client.Close()
 
@@ -57,19 +62,22 @@ func Run(cfg *Config) (err error) {
 		}
 	}(client)
 
-	commandRequest := &entities.CommandRequest{
-		Script:      cfg.Script,
-		Environment: cfg.Environment,
-	}
-	message, err := json.Marshal(commandRequest)
-	if err != nil {
-		return fmt.Errorf("failed to marshal command request: %s", err)
-	}
-
-	err = client.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageCommand}, message...))
-	if err != nil {
-		return fmt.Errorf("failed to send command request: %s", err)
-	}
+	// auth request
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		authRequest := &entities.AuthRequest{
+			ClientID:     cfg.ClientID,
+			ClientSecret: cfg.ClientSecret,
+		}
+		message, err := json.Marshal(authRequest)
+		if err != nil {
+			logger.Errorf("failed to marshal auth request: %s", err)
+		}
+		err = client.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageAuthRequest}, message...))
+		if err != nil {
+			logger.Errorf("failed to send auth request: %s", err)
+		}
+	}()
 
 	for {
 		_, message, err := client.ReadMessage()
@@ -83,12 +91,26 @@ func Run(cfg *Config) (err error) {
 		}
 
 		switch message[0] {
-		case entities.Stdout:
-			os.Stdout.Write(message)
-		case entities.Stderr:
-			os.Stderr.Write(message)
-		case entities.ExitCode:
+		case entities.MessageCommandStdout:
+			os.Stdout.Write(message[1:])
+		case entities.MessageCommandStderr:
+			os.Stderr.Write(message[1:])
+		case entities.MessageCommandExitCode:
 			os.Exit(int(message[1]))
+		case entities.MessageAuthResponseSuccess:
+			// command request
+			commandRequest := &entities.CommandRequest{
+				Script:      cfg.Script,
+				Environment: cfg.Environment,
+			}
+			message, err = json.Marshal(commandRequest)
+			if err != nil {
+				return fmt.Errorf("failed to marshal command request: %s", err)
+			}
+			err = client.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageCommand}, message...))
+			if err != nil {
+				return fmt.Errorf("failed to send command request: %s", err)
+			}
 		}
 	}
 }

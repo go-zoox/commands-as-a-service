@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 \
   go build \
   -trimpath \
   -ldflags '-w -s -buildid=' \
-  -v -o gzterminal
+  -v -o gzcaas
 
 # Server
 FROM whatwewant/alpine:v3.17-1
@@ -34,10 +34,10 @@ ARG VERSION=latest
 
 ENV MODE=production
 
-COPY --from=builder /build/gzterminal /bin
+COPY --from=builder /build/gzcaas /bin
 
-RUN gzterminal --version
+RUN gzcaas --version
 
 ENV VERSION=${VERSION}
 
-CMD gzterminal server -c /conf/config.yml
+CMD gzcaas server

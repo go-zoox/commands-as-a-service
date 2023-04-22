@@ -11,13 +11,16 @@ type Server interface {
 }
 
 type Config struct {
+	Version     string
 	Port        int64
 	Shell       string
 	Context     string
 	Environment map[string]string
 	Timeout     int64
-	Username    string
-	Password    string
+	// Auth
+	ClientID     string
+	ClientSecret string
+	AuthService  string
 }
 
 type server struct {
@@ -35,9 +38,9 @@ func Serve(cfg *Config) error {
 func (s *server) Run(cfg *Config) error {
 	app := defaults.Application()
 
-	if cfg.Username != "" && cfg.Password != "" {
-		app.Use(createAuthMiddleware(cfg))
-	}
+	// if cfg.ClientID != "" && cfg.ClientSecret != "" {
+	// 	app.Use(createAuthMiddleware(cfg))
+	// }
 
 	app.WebSocket("/ws", createWsService(cfg))
 
