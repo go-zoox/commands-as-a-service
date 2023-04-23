@@ -25,10 +25,10 @@ func registryServer(app *cli.MultipleProgram) {
 				Value:   "sh",
 			},
 			&cli.StringFlag{
-				Name:    "context",
-				Usage:   "specify command context",
+				Name:    "workdir",
+				Usage:   "specify command workdir",
 				Aliases: []string{"c"},
-				EnvVars: []string{"CAAS_CONTEXT"},
+				EnvVars: []string{"CAAS_WORKDIR"},
 			},
 			&cli.StringFlag{
 				Name:    "environment",
@@ -59,7 +59,7 @@ func registryServer(app *cli.MultipleProgram) {
 				New(&server.Config{
 					Port:         ctx.Int64("port"),
 					Shell:        ctx.String("shell"),
-					Context:      ctx.String("context"),
+					WorkDir:      ctx.String("workdir"),
 					Timeout:      ctx.Int64("timeout"),
 					ClientID:     ctx.String("client-id"),
 					ClientSecret: ctx.String("client-secret"),
