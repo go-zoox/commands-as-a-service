@@ -4,8 +4,9 @@ go 1.20
 
 require (
 	github.com/go-zoox/cli v1.2.1
+	github.com/go-zoox/datetime v1.1.1
 	github.com/go-zoox/fetch v1.7.6
-	github.com/go-zoox/fs v1.3.9
+	github.com/go-zoox/fs v1.3.11
 	github.com/go-zoox/logger v1.4.4
 	github.com/go-zoox/zoox v1.9.6
 	github.com/gorilla/websocket v1.5.0
@@ -25,7 +26,6 @@ require (
 	github.com/go-zoox/counter v1.2.0 // indirect
 	github.com/go-zoox/cron v1.1.2 // indirect
 	github.com/go-zoox/crypto v1.1.8 // indirect
-	github.com/go-zoox/datetime v1.1.1 // indirect
 	github.com/go-zoox/debug v1.0.1 // indirect
 	github.com/go-zoox/dotenv v1.2.3 // indirect
 	github.com/go-zoox/encoding v1.2.1 // indirect
@@ -66,3 +66,4 @@ require (
 // replace github.com/go-zoox/zoox => ../zoox
 
 // replace github.com/go-zoox/logger => ../logger
+// replace github.com/go-zoox/fs => ../fs

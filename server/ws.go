@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/go-zoox/commands-as-a-service/entities"
+	"github.com/go-zoox/datetime"
 	"github.com/go-zoox/logger"
 	"github.com/go-zoox/zoox"
 	"github.com/go-zoox/zoox/components/context/websocket"
@@ -111,8 +113,17 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					return
 				}
 
+				cmdCfg, err := cfg.GetCommandConfig(client.ID)
+				if err != nil {
+					logger.Errorf("failed to get command config: %s", err)
+					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
+					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.Disconnect()
+					return
+				}
+
 				cmd = exec.Command(cfg.Shell, "-c", command.Script)
-				cmd.Dir = cfg.Context
+				cmd.Dir = cmdCfg.WorkDir
 				// cmd.Env = []string{}
 				environment := map[string]string{}
 				if command.Environment != nil {
@@ -134,20 +145,32 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					cmd.Process.Kill()
 				})
 
-				cmd.Stdout = &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout}
-				cmd.Stderr = &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr}
+				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
+				cmd.Stderr = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr})
 
 				logger.Infof("[command] start to run: %s", command.Script)
-				err := cmd.Run()
+				cmdCfg.Script.WriteString(command.Script)
+				cmdCfg.Env.WriteString(strings.Join(cmd.Env, "\n"))
+				cmdCfg.StartAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
+				err = cmd.Run()
 				if err != nil {
 					if isKilledByDisconnect {
 						logger.Infof("[command] killed by disconnect: %s", command.Script)
 						return
 					}
 
+					cmdCfg.FailedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
+					cmdCfg.Error.WriteString(err.Error())
+					cmdCfg.Status.WriteString("failure")
+
 					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", command.Script, err, cmd.ProcessState.ExitCode())
 					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
+					client.Disconnect()
+					return
 				}
+
+				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
+				cmdCfg.Status.WriteString("success")
 				logger.Infof("[command] succeed to run: %s", command.Script)
 
 				commandTimeoutTimer.Stop()
