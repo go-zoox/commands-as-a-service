@@ -40,6 +40,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 		isAuthenticated := false
 		stopped := false
 		isKilledByDisconnect := false
+		if cfg.ClientID == "" && cfg.ClientSecret == "" && cfg.AuthService == "" {
+			isAuthenticated = true
+		}
 
 		authenticationTimeoutTimer := time.AfterFunc(30*time.Second, func() {
 			if !isAuthenticated {
