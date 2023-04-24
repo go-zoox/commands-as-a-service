@@ -24,7 +24,7 @@ type WSClientWriter struct {
 }
 
 func (w WSClientWriter) Write(p []byte) (n int, err error) {
-	w.Client.WriteBinary(append([]byte{w.Flag}, p...))
+	w.Client.WriteText(append([]byte{w.Flag}, p...))
 	return len(p), nil
 }
 
@@ -88,20 +88,20 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				if err := authenticator(authClient.ClientID, authClient.ClientSecret); err != nil {
 					logger.Errorf("[ws][id: %s] failed to authenticate => %v", client.ID, err)
 
-					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to authenticate: %s\n", err))...))
-					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to authenticate: %s\n", err))...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
 				}
 
 				isAuthenticated = true
 				logger.Infof("[ws][id: %s] %s authenticated", client.ID, cfg.ClientSecret)
-				client.WriteBinary([]byte{entities.MessageAuthResponseSuccess})
+				client.WriteText([]byte{entities.MessageAuthResponseSuccess})
 			case entities.MessageCommand:
 				if !isAuthenticated {
 					logger.Errorf("[ws][id: %s] not authenticated", client.ID)
-					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("not authenticated\n")...))
-					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("not authenticated\n")...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
 				}
@@ -110,8 +110,8 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				if err := json.Unmarshal(msg[1:], command); err != nil {
 					logger.Errorf("failed to unmarshal command request: %s", err)
 
-					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("invalid command request\n")...))
-					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("invalid command request\n")...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
 				}
@@ -119,8 +119,8 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				cmdCfg, err := cfg.GetCommandConfig(client.ID)
 				if err != nil {
 					logger.Errorf("failed to get command config: %s", err)
-					client.WriteBinary(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
-					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(1)})
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
 				}
@@ -167,7 +167,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					cmdCfg.Status.WriteString("failure")
 
 					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", command.Script, err, cmd.ProcessState.ExitCode())
-					client.WriteBinary([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
 					client.Disconnect()
 					return
 				}

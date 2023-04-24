@@ -1,22 +1,22 @@
 package entities
 
 // MessageCommand is the message for command
-const MessageCommand = 0x00
+const MessageCommand = '0'
 
 // MessagePing is the message for ping
-const MessagePing = 0x01
+const MessagePing = '1'
 
 // MessageAuthRequest is the message for auth request
-const MessageAuthRequest = 0x02
+const MessageAuthRequest = '2'
 
 // MessageAuthResponseSuccess is the message for auth response success
-const MessageAuthResponseSuccess = 0x03
+const MessageAuthResponseSuccess = '3'
 
 // MessageCommandStdout is the message for command stdout
-const MessageCommandStdout = 0x10
+const MessageCommandStdout = '4'
 
 // MessageCommandStderr is the message for command stderr
-const MessageCommandStderr = 0x11
+const MessageCommandStderr = '5'
 
 // MessageCommandExitCode is the message for command exit code
-const MessageCommandExitCode = 0x12
+const MessageCommandExitCode = '6'
