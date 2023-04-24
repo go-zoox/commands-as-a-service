@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-zoox/cli"
 	"github.com/go-zoox/commands-as-a-service/client"
+	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/fs"
 )
 
@@ -62,14 +63,20 @@ func registryClient(app *cli.MultipleProgram) {
 				return fmt.Errorf("script is required")
 			}
 
-			return client.
+			c := client.
 				New(&client.Config{
 					Server:       ctx.String("server"),
-					Script:       script,
 					ClientID:     ctx.String("client-id"),
 					ClientSecret: ctx.String("client-secret"),
-				}).
-				Run()
+				})
+
+			if err := c.Connect(); err != nil {
+				return fmt.Errorf("failed to connect to server: %s", err)
+			}
+
+			return c.Exec(&entities.Command{
+				Script: script,
+			})
 		},
 	})
 }

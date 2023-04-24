@@ -13,7 +13,6 @@ import (
 	"github.com/go-zoox/logger"
 	"github.com/go-zoox/zoox"
 	"github.com/go-zoox/zoox/components/context/websocket"
-	gw "github.com/gorilla/websocket"
 )
 
 // WSClientWriter is the writer for websocket client
@@ -35,7 +34,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 	return func(ctx *zoox.Context, client *websocket.WebSocketClient) {
 		var cmd *exec.Cmd
 		var authClient *entities.AuthRequest
-		var command *entities.CommandRequest
+		var command *entities.Command
 
 		isAuthenticated := false
 		stopped := false
@@ -95,7 +94,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				}
 
 				isAuthenticated = true
-				logger.Infof("[ws][id: %s] %s authenticated", client.ID, cfg.ClientSecret)
+				logger.Infof("[ws][id: %s] authenticated", client.ID)
 				client.WriteText([]byte{entities.MessageAuthResponseSuccess})
 			case entities.MessageCommand:
 				if !isAuthenticated {
@@ -106,13 +105,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					return
 				}
 
-				command = &entities.CommandRequest{}
+				command = &entities.Command{}
 				if err := json.Unmarshal(msg[1:], command); err != nil {
 					logger.Errorf("failed to unmarshal command request: %s", err)
 
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("invalid command request\n")...))
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
-					client.Disconnect()
 					return
 				}
 
@@ -121,7 +119,6 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					logger.Errorf("failed to get command config: %s", err)
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
-					client.Disconnect()
 					return
 				}
 
@@ -168,9 +165,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 
 					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", command.Script, err, cmd.ProcessState.ExitCode())
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
-					client.Disconnect()
 					return
 				}
+				client.WriteText([]byte{entities.MessageCommandExitCode, byte(0)})
 
 				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
 				cmdCfg.Status.WriteString("success")
@@ -179,12 +176,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				commandTimeoutTimer.Stop()
 				heartbeatTimeoutTimer.Stop()
 
-				client.WriteMessage(gw.CloseMessage, gw.FormatCloseMessage(1000, "woops"))
-				client.Disconnect()
 				stopped = true
 			default:
 				logger.Errorf("unknown message type: %d", msg[0])
-				client.Disconnect()
 			}
 		}
 	}
