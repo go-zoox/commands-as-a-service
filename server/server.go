@@ -129,7 +129,7 @@ func New(cfg *Config) Server {
 func (s *server) Run() error {
 	app := defaults.Application()
 
-	app.WebSocket("/ws", createWsService(s.cfg))
+	app.WebSocket("/", createWsService(s.cfg))
 
 	return app.Run(fmt.Sprintf("0.0.0.0:%d", s.cfg.Port))
 }
