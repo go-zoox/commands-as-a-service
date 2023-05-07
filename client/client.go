@@ -22,9 +22,9 @@ type Client interface {
 
 // Config is the configuration of caas client
 type Config struct {
-	Server       string
-	ClientID     string
-	ClientSecret string
+	Server       string `config:"server"`
+	ClientID     string `config:"client_id"`
+	ClientSecret string `config:"client_secret"`
 }
 
 type client struct {
@@ -116,6 +116,9 @@ func (c *client) Connect() (err error) {
 				os.Stderr.Write(message[1:])
 			case entities.MessageCommandExitCode:
 				c.exitCode <- int(message[1])
+			case entities.MessageAuthResponseFailure:
+				os.Stderr.Write(message[1:])
+				os.Exit(1)
 			case entities.MessageAuthResponseSuccess:
 				ready <- struct{}{}
 			}

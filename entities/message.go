@@ -12,11 +12,14 @@ const MessageAuthRequest = '2'
 // MessageAuthResponseSuccess is the message for auth response success
 const MessageAuthResponseSuccess = '3'
 
+// MessageAuthResponseFailure is the message for auth response failure
+const MessageAuthResponseFailure = '4'
+
 // MessageCommandStdout is the message for command stdout
-const MessageCommandStdout = '4'
+const MessageCommandStdout = '5'
 
 // MessageCommandStderr is the message for command stderr
-const MessageCommandStderr = '5'
+const MessageCommandStderr = '6'
 
 // MessageCommandExitCode is the message for command exit code
-const MessageCommandExitCode = '6'
+const MessageCommandExitCode = '7'

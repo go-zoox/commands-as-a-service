@@ -16,16 +16,16 @@ type Server interface {
 
 // Config is the configuration of caas server
 type Config struct {
-	Port        int64
-	Shell       string
-	Environment map[string]string
-	Timeout     int64
+	Port        int64             `config:"port,default=8838"`
+	Shell       string            `config:"shell"`
+	Environment map[string]string `config:"environment"`
+	Timeout     int64             `config:"timeout"`
 	// Auth
-	ClientID     string
-	ClientSecret string
-	AuthService  string
+	ClientID     string `config:"client_id"`
+	ClientSecret string `config:"client_secret"`
+	AuthService  string `config:"auth_service"`
 	//
-	WorkDir string
+	WorkDir string `config:"workdir"`
 }
 
 // CommandConfig is the configuration of caas command
@@ -43,27 +43,30 @@ type CommandConfig struct {
 
 func (c *Config) GetCommandConfig(id string) (*CommandConfig, error) {
 	isNeedWrite := false
-	var workDir string
+	var baseDir string
 
-	if c.WorkDir != "" {
-		workDir = fmt.Sprintf("%s/%s", c.WorkDir, id)
-		isNeedWrite = true
+	if c.WorkDir == "" {
+		c.WorkDir = "/tmp/caas"
+	}
 
-		if err := fs.Mkdirp(workDir); err != nil {
-			return nil, fmt.Errorf("failed to create workdir: %s", err)
-		}
+	baseDir = fmt.Sprintf("%s/%s", c.WorkDir, id)
+	isNeedWrite = true
+
+	workDir := fmt.Sprintf("%s/work", baseDir)
+	if err := fs.Mkdirp(workDir); err != nil {
+		return nil, fmt.Errorf("failed to create workdir: %s", err)
 	}
 
 	return &CommandConfig{
 		WorkDir:   workDir,
-		Script:    &WriterFile{Path: fmt.Sprintf("%s/script", workDir), IsNeedWrite: isNeedWrite},
-		Log:       &WriterFile{Path: fmt.Sprintf("%s/log", workDir), IsNeedWrite: isNeedWrite},
-		Env:       &WriterFile{Path: fmt.Sprintf("%s/env", workDir), IsNeedWrite: isNeedWrite},
-		StartAt:   &WriterFile{Path: fmt.Sprintf("%s/start_at", workDir), IsNeedWrite: isNeedWrite},
-		SucceedAt: &WriterFile{Path: fmt.Sprintf("%s/succeed_at", workDir), IsNeedWrite: isNeedWrite},
-		FailedAt:  &WriterFile{Path: fmt.Sprintf("%s/failed_at", workDir), IsNeedWrite: isNeedWrite},
-		Status:    &WriterFile{Path: fmt.Sprintf("%s/status", workDir), IsNeedWrite: isNeedWrite},
-		Error:     &WriterFile{Path: fmt.Sprintf("%s/error", workDir), IsNeedWrite: isNeedWrite},
+		Script:    &WriterFile{Path: fmt.Sprintf("%s/script", baseDir), IsNeedWrite: isNeedWrite},
+		Log:       &WriterFile{Path: fmt.Sprintf("%s/log", baseDir), IsNeedWrite: isNeedWrite},
+		Env:       &WriterFile{Path: fmt.Sprintf("%s/env", baseDir), IsNeedWrite: isNeedWrite},
+		StartAt:   &WriterFile{Path: fmt.Sprintf("%s/start_at", baseDir), IsNeedWrite: isNeedWrite},
+		SucceedAt: &WriterFile{Path: fmt.Sprintf("%s/succeed_at", baseDir), IsNeedWrite: isNeedWrite},
+		FailedAt:  &WriterFile{Path: fmt.Sprintf("%s/failed_at", baseDir), IsNeedWrite: isNeedWrite},
+		Status:    &WriterFile{Path: fmt.Sprintf("%s/status", baseDir), IsNeedWrite: isNeedWrite},
+		Error:     &WriterFile{Path: fmt.Sprintf("%s/error", baseDir), IsNeedWrite: isNeedWrite},
 	}, nil
 }
 

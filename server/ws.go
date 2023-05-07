@@ -87,7 +87,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				if err := authenticator(authClient.ClientID, authClient.ClientSecret); err != nil {
 					logger.Errorf("[ws][id: %s] failed to authenticate => %v", client.ID, err)
 
-					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to authenticate: %s\n", err))...))
+					client.WriteText(append([]byte{entities.MessageAuthResponseFailure}, []byte(fmt.Sprintf("failed to authenticate: %s\n", err))...))
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					client.Disconnect()
 					return
