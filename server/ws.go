@@ -12,7 +12,7 @@ import (
 	"github.com/go-zoox/datetime"
 	"github.com/go-zoox/logger"
 	"github.com/go-zoox/zoox"
-	"github.com/go-zoox/zoox/components/context/websocket"
+	"github.com/go-zoox/zoox/components/application/websocket"
 )
 
 // WSClientWriter is the writer for websocket client

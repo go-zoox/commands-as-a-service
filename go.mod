@@ -8,7 +8,7 @@ require (
 	github.com/go-zoox/fetch v1.7.6
 	github.com/go-zoox/fs v1.3.11
 	github.com/go-zoox/logger v1.4.4
-	github.com/go-zoox/zoox v1.9.7
+	github.com/go-zoox/zoox v1.9.11
 	github.com/gorilla/websocket v1.5.0
 )
 
@@ -22,7 +22,7 @@ require (
 	github.com/go-zoox/chalk v1.0.2 // indirect
 	github.com/go-zoox/compress v1.0.1 // indirect
 	github.com/go-zoox/cookie v1.0.2 // indirect
-	github.com/go-zoox/core-utils v1.2.7 // indirect
+	github.com/go-zoox/core-utils v1.2.9 // indirect
 	github.com/go-zoox/counter v1.2.0 // indirect
 	github.com/go-zoox/cron v1.1.2 // indirect
 	github.com/go-zoox/crypto v1.1.8 // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/go-zoox/ratelimit v1.2.0 // indirect
 	github.com/go-zoox/safe v1.0.1 // indirect
 	github.com/go-zoox/session v1.0.6 // indirect
-	github.com/go-zoox/tag v1.2.0 // indirect
+	github.com/go-zoox/tag v1.2.2 // indirect
 	github.com/go-zoox/uuid v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect

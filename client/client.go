@@ -101,7 +101,6 @@ func (c *client) Connect() (err error) {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
 				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					conn.Close()
 					return
 				}
 
