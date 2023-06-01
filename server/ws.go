@@ -66,7 +66,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 			if cmd != nil && !stopped {
 				isKilledByDisconnect = true
 
-				cmd.Process.Kill()
+				if cmd.Process != nil {
+					cmd.Process.Kill()
+				}
 			}
 		}
 
@@ -167,6 +169,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
 					return
 				}
+
 				client.WriteText([]byte{entities.MessageCommandExitCode, byte(0)})
 
 				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))

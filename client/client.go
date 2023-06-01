@@ -73,7 +73,7 @@ func (c *client) Connect() (err error) {
 
 			logger.Debugf("ping")
 			if err := c.WriteMessage(websocket.TextMessage, []byte{entities.MessagePing}); err != nil {
-				logger.Errorf("failed to send ping: %s", err)
+				logger.Debugf("failed to send ping: %s", err)
 				return
 			}
 		}
@@ -104,7 +104,16 @@ func (c *client) Connect() (err error) {
 					return
 				}
 
-				logger.Errorf("failed to receive command response: %s", err)
+				if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+					return
+				}
+
+				if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+					return
+				}
+
+				logger.Debugf("failed to receive command response: %s", err)
+				// os.Exit(1)
 				return
 			}
 
@@ -144,10 +153,12 @@ func (c *client) Exec(command *entities.Command) error {
 		return fmt.Errorf("failed to send command request: %s", err)
 	}
 
+	// <-c.exitCode
 	exitCode := <-c.exitCode
 
 	if err := c.conn.Close(); err != nil {
-		return fmt.Errorf("failed to close connection: %s", err)
+		// return fmt.Errorf("failed to close connection: %s", err)
+		logger.Debugf("failed to close connection: %s", err)
 	}
 
 	os.Exit(exitCode)
