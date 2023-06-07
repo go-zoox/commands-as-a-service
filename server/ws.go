@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -127,7 +128,14 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebS
 				cmd = exec.Command(cfg.Shell, "-c", command.Script)
 				cmd.Dir = cmdCfg.WorkDir
 				// cmd.Env = []string{}
-				environment := map[string]string{}
+				environment := map[string]string{
+					"HOME":    os.Getenv("HOME"),
+					"USER":    os.Getenv("USER"),
+					"LOGNAME": os.Getenv("LOGNAME"),
+					"SHELL":   cfg.Shell,
+					"TERM":    os.Getenv("TERM"),
+					"PATH":    os.Getenv("PATH"),
+				}
 				if command.Environment != nil {
 					for k, v := range command.Environment {
 						environment[k] = v
