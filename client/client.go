@@ -18,6 +18,7 @@ import (
 type Client interface {
 	Connect() error
 	Exec(command *entities.Command) error
+	Close() error
 }
 
 // Config is the configuration of caas client
@@ -25,6 +26,7 @@ type Config struct {
 	Server       string `config:"server"`
 	ClientID     string `config:"client_id"`
 	ClientSecret string `config:"client_secret"`
+	AutoExit     bool   `config:"auto_exit"`
 }
 
 type client struct {
@@ -126,7 +128,7 @@ func (c *client) Connect() (err error) {
 				c.exitCode <- int(message[1])
 			case entities.MessageAuthResponseFailure:
 				os.Stderr.Write(message[1:])
-				os.Exit(1)
+				c.exitCode <- 1
 			case entities.MessageAuthResponseSuccess:
 				ready <- struct{}{}
 			}
@@ -161,7 +163,15 @@ func (c *client) Exec(command *entities.Command) error {
 		logger.Debugf("failed to close connection: %s", err)
 	}
 
-	os.Exit(exitCode)
+	if !c.cfg.AutoExit {
+		fmt.Printf("exit code: %d\n", exitCode)
+	} else {
+		os.Exit(exitCode)
+	}
 
 	return nil
+}
+
+func (c *client) Close() error {
+	return c.conn.Close()
 }
