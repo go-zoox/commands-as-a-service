@@ -3,18 +3,16 @@ module github.com/go-zoox/commands-as-a-service
 go 1.20
 
 require (
-	github.com/go-zoox/cli v1.2.1
 	github.com/go-zoox/datetime v1.1.1
 	github.com/go-zoox/fetch v1.7.6
 	github.com/go-zoox/fs v1.3.11
 	github.com/go-zoox/logger v1.4.4
-	github.com/go-zoox/zoox v1.9.11
+	github.com/go-zoox/zoox v1.9.13
 	github.com/gorilla/websocket v1.5.0
 )
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
@@ -47,14 +45,11 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/urfave/cli/v2 v2.25.1 // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
