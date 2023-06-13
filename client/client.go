@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"time"
@@ -27,6 +28,9 @@ type Config struct {
 	ClientID     string `config:"client_id"`
 	ClientSecret string `config:"client_secret"`
 	AutoExit     bool   `config:"auto_exit"`
+	//
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 type client struct {
@@ -34,13 +38,28 @@ type client struct {
 	cfg  *Config
 	//
 	exitCode chan int
+	//
+	stdout io.Writer
+	stderr io.Writer
 }
 
 // New creates a new caas client
 func New(cfg *Config) Client {
+	stdout := cfg.Stdout
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+
+	stderr := cfg.Stderr
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+
 	return &client{
 		cfg:      cfg,
 		exitCode: make(chan int),
+		stdout:   stdout,
+		stderr:   stderr,
 	}
 }
 
@@ -121,13 +140,13 @@ func (c *client) Connect() (err error) {
 
 			switch message[0] {
 			case entities.MessageCommandStdout:
-				os.Stdout.Write(message[1:])
+				c.stdout.Write(message[1:])
 			case entities.MessageCommandStderr:
-				os.Stderr.Write(message[1:])
+				c.stderr.Write(message[1:])
 			case entities.MessageCommandExitCode:
 				c.exitCode <- int(message[1])
 			case entities.MessageAuthResponseFailure:
-				os.Stderr.Write(message[1:])
+				c.stderr.Write(message[1:])
 				c.exitCode <- 1
 			case entities.MessageAuthResponseSuccess:
 				ready <- struct{}{}
