@@ -19,7 +19,7 @@ import (
 // WSClientWriter is the writer for websocket client
 type WSClientWriter struct {
 	io.Writer
-	Client *websocket.WebSocketClient
+	Client *websocket.Client
 	Flag   byte
 }
 
@@ -28,11 +28,11 @@ func (w WSClientWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.WebSocketClient) {
+func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Client) {
 	heartbeatTimeout := 30 * time.Second
 	authenticator := createAuthenticator(cfg)
 
-	return func(ctx *zoox.Context, client *websocket.WebSocketClient) {
+	return func(ctx *zoox.Context, client *websocket.Client) {
 		var cmd *exec.Cmd
 		var authClient *entities.AuthRequest
 		var command *entities.Command

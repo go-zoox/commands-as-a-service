@@ -7,7 +7,7 @@ require (
 	github.com/go-zoox/fetch v1.7.6
 	github.com/go-zoox/fs v1.3.11
 	github.com/go-zoox/logger v1.4.4
-	github.com/go-zoox/zoox v1.9.13
+	github.com/go-zoox/zoox v1.10.6
 	github.com/gorilla/websocket v1.5.0
 )
 
@@ -16,10 +16,10 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-zoox/cache v1.0.2 // indirect
+	github.com/go-zoox/cache v1.0.3 // indirect
 	github.com/go-zoox/chalk v1.0.2 // indirect
 	github.com/go-zoox/compress v1.0.1 // indirect
-	github.com/go-zoox/cookie v1.0.2 // indirect
+	github.com/go-zoox/cookie v1.2.0 // indirect
 	github.com/go-zoox/core-utils v1.2.9 // indirect
 	github.com/go-zoox/counter v1.2.0 // indirect
 	github.com/go-zoox/cron v1.1.2 // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/go-zoox/random v1.0.3 // indirect
 	github.com/go-zoox/ratelimit v1.2.0 // indirect
 	github.com/go-zoox/safe v1.0.1 // indirect
-	github.com/go-zoox/session v1.0.6 // indirect
+	github.com/go-zoox/session v1.2.0 // indirect
 	github.com/go-zoox/tag v1.2.2 // indirect
 	github.com/go-zoox/uuid v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
