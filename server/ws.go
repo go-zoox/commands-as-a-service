@@ -74,6 +74,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 		}
 
 		client.OnTextMessage = func(msg []byte) {
+			defer func() {
+				if r := recover(); r != nil {
+					logger.Errorf("[ws][id: %s] receive text message panic => %v", client.ID, r)
+				}
+			}()
+
 			switch msg[0] {
 			case entities.MessagePing:
 				logger.Debugf("[ws][id: %s] receive ping", client.ID)
