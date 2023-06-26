@@ -9,6 +9,8 @@ import (
 	"github.com/go-zoox/zoox/defaults"
 )
 
+const DefaultShell = "sh"
+
 // Server is the server interface of caas
 type Server interface {
 	Run() error
@@ -26,8 +28,6 @@ type Config struct {
 	AuthService  string `config:"auth_service"`
 	//
 	WorkDir string `config:"workdir"`
-	//
-	ScriptMode string `config:"script_mode,default=text"`
 }
 
 // CommandConfig is the configuration of caas command
@@ -123,6 +123,10 @@ type server struct {
 
 // New creates a new caas server
 func New(cfg *Config) Server {
+	if cfg.Shell == "" {
+		cfg.Shell = DefaultShell
+	}
+
 	return &server{
 		cfg: cfg,
 	}

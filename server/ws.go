@@ -136,9 +136,10 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				if cfg.ScriptMode == "text" {
+				if cfg.Shell == DefaultShell {
 					cmd = exec.Command(cfg.Shell, "-c", command.Script)
-				} else if cfg.ScriptMode == "file" {
+				} else {
+					// file mode
 					tmpScriptFilepath = fs.TmpFilePath()
 					// logger.Infof("[script_mode: %s] tmp script filepath: %s", cfg.ScriptMode, tmpScriptFilepath)
 					if err := fs.WriteFile(tmpScriptFilepath, []byte(command.Script)); err != nil {
@@ -146,8 +147,6 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					}
 
 					cmd = exec.Command(cfg.Shell, tmpScriptFilepath)
-				} else {
-					panic(fmt.Errorf("invalid script mode: %s", cfg.ScriptMode))
 				}
 
 				cmd.Dir = cmdCfg.WorkDir
