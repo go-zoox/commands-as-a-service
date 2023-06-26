@@ -152,7 +152,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 
 				// timeout
 				commandTimeoutTimer := time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
-					cmd.Process.Kill()
+					if cmd.Process != nil {
+						cmd.Process.Kill()
+					}
 				})
 
 				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
