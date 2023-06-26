@@ -7,7 +7,7 @@ require (
 	github.com/go-zoox/fetch v1.7.6
 	github.com/go-zoox/fs v1.3.11
 	github.com/go-zoox/logger v1.4.4
-	github.com/go-zoox/zoox v1.10.6
+	github.com/go-zoox/zoox v1.10.7
 	github.com/gorilla/websocket v1.5.0
 )
 
