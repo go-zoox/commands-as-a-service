@@ -26,6 +26,8 @@ type Config struct {
 	AuthService  string `config:"auth_service"`
 	//
 	WorkDir string `config:"workdir"`
+	//
+	ScriptMode string `config:"script_mode,default=text"`
 }
 
 // CommandConfig is the configuration of caas command

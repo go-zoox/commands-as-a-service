@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/datetime"
+	"github.com/go-zoox/fs"
 	"github.com/go-zoox/logger"
 	"github.com/go-zoox/zoox"
 	"github.com/go-zoox/zoox/components/application/websocket"
@@ -77,6 +78,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 			defer func() {
 				if r := recover(); r != nil {
 					logger.Errorf("[ws][id: %s] receive text message panic => %v", client.ID, r)
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("internal server error: %v\n", r))...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
+					return
 				}
 			}()
 
@@ -115,6 +119,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				command = &entities.Command{}
+				tmpScriptFilepath := ""
 				if err := json.Unmarshal(msg[1:], command); err != nil {
 					logger.Errorf("failed to unmarshal command request: %s", err)
 
@@ -131,7 +136,20 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				cmd = exec.Command(cfg.Shell, "-c", command.Script)
+				if cfg.ScriptMode == "text" {
+					cmd = exec.Command(cfg.Shell, "-c", command.Script)
+				} else if cfg.ScriptMode == "file" {
+					tmpScriptFilepath = fs.TmpFilePath()
+					// logger.Infof("[script_mode: %s] tmp script filepath: %s", cfg.ScriptMode, tmpScriptFilepath)
+					if err := fs.WriteFile(tmpScriptFilepath, []byte(command.Script)); err != nil {
+						panic(fmt.Errorf("failed to write script file: %s", err))
+					}
+
+					cmd = exec.Command(cfg.Shell, tmpScriptFilepath)
+				} else {
+					panic(fmt.Errorf("invalid script mode: %s", cfg.ScriptMode))
+				}
+
 				cmd.Dir = cmdCfg.WorkDir
 				// cmd.Env = []string{}
 				environment := map[string]string{
@@ -191,6 +209,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
 				cmdCfg.Status.WriteString("success")
 				logger.Infof("[command] succeed to run: %s", command.Script)
+
+				if tmpScriptFilepath != "" && fs.IsExist(tmpScriptFilepath) {
+					if err := fs.Remove(tmpScriptFilepath); err != nil {
+						panic(fmt.Errorf("failed to remove tmp script file: %s", err))
+					}
+				}
 
 				commandTimeoutTimer.Stop()
 				heartbeatTimeoutTimer.Stop()
