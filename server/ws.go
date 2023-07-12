@@ -206,10 +206,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				client.WriteText([]byte{entities.MessageCommandExitCode, byte(0)})
 
 				// @TODO clean workdir
-				if fs.IsExist(cmdCfg.WorkDir) {
-					logger.Infof("[command] clean work dir: %s", cmdCfg.WorkDir)
-					if err := fs.Remove(cmdCfg.WorkDir); err != nil {
-						panic(fmt.Errorf("failed to clean workdir(%s): %s", cmdCfg.WorkDir, err))
+				if cfg.IsAutoCleanUserWorkDir {
+					if fs.IsExist(cmdCfg.WorkDir) {
+						logger.Infof("[command] clean work dir: %s", cmdCfg.WorkDir)
+						if err := fs.Remove(cmdCfg.WorkDir); err != nil {
+							panic(fmt.Errorf("failed to clean workdir(%s): %s", cmdCfg.WorkDir, err))
+						}
 					}
 				}
 
