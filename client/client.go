@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,12 +23,24 @@ type Client interface {
 	Close() error
 }
 
+type ExitError struct {
+	ExitCode int
+	Message  string
+}
+
+func (e ExitError) Error() string {
+	if e.Message != "" {
+		return fmt.Sprintf("exit code: %d, message: %s", e.ExitCode, e.Message)
+	}
+
+	return fmt.Sprintf("exit code: %d", e.ExitCode)
+}
+
 // Config is the configuration of caas client
 type Config struct {
 	Server       string `config:"server"`
 	ClientID     string `config:"client_id"`
 	ClientSecret string `config:"client_secret"`
-	AutoExit     bool   `config:"auto_exit"`
 	//
 	Stdout io.Writer
 	Stderr io.Writer
@@ -72,20 +85,25 @@ func (c *client) Connect() (err error) {
 	}
 	logger.Debugf("connecting to %s", u.String())
 
-	conn, response, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	conn, response, err := websocket.DefaultDialer.DialContext(ctx, u.String(), nil)
 	if err != nil {
 		if response == nil || response.Body == nil {
+			cancel()
 			return fmt.Errorf("failed to connect at %s (error: %s)", u.String(), err)
 		}
 
 		body, errB := ioutil.ReadAll(response.Body)
 		if errB != nil {
+			cancel()
 			return fmt.Errorf("failed to connect at %s (status: %s, error: %s)", u.String(), response.Status, err)
 		}
 
+		cancel()
 		return fmt.Errorf("failed to connect at %s (status: %d, response: %s, error: %v)", u.String(), response.StatusCode, string(body), err)
 	}
 	c.conn = conn
+	cancel()
 
 	// heart beat
 	go func(c *websocket.Conn) {
@@ -167,26 +185,28 @@ func (c *client) Exec(command *entities.Command) error {
 	}
 	message, err := json.Marshal(commandRequest)
 	if err != nil {
-		return fmt.Errorf("failed to marshal command request: %s", err)
+		return &ExitError{
+			ExitCode: 1,
+			Message:  fmt.Sprintf("failed to marshal command request: %s", err),
+		}
 	}
 	err = c.conn.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageCommand}, message...))
 	if err != nil {
-		return fmt.Errorf("failed to send command request: %s", err)
+		return &ExitError{
+			ExitCode: 1,
+			Message:  fmt.Sprintf("failed to send command request: %s", err),
+		}
 	}
 
-	// <-c.exitCode
 	exitCode := <-c.exitCode
 
-	if err := c.conn.Close(); err != nil {
-		// return fmt.Errorf("failed to close connection: %s", err)
-		logger.Debugf("failed to close connection: %s", err)
+	if exitCode == 0 {
+		return nil
 	}
 
-	if c.cfg.AutoExit {
-		os.Exit(exitCode)
+	return &ExitError{
+		ExitCode: exitCode,
 	}
-
-	return nil
 }
 
 func (c *client) Close() error {
