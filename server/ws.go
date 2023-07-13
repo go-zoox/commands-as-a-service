@@ -174,11 +174,14 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				// timeout
-				commandTimeoutTimer := time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
-					if cmd.Process != nil {
-						cmd.Process.Kill()
-					}
-				})
+				var commandTimeoutTimer *time.Timer
+				if cfg.Timeout != 0 {
+					commandTimeoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
+						if cmd.Process != nil {
+							cmd.Process.Kill()
+						}
+					})
+				}
 
 				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
 				cmd.Stderr = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr})
@@ -225,8 +228,13 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					}
 				}
 
-				commandTimeoutTimer.Stop()
-				heartbeatTimeoutTimer.Stop()
+				if commandTimeoutTimer != nil {
+					commandTimeoutTimer.Stop()
+				}
+
+				if heartbeatTimeoutTimer != nil {
+					heartbeatTimeoutTimer.Stop()
+				}
 
 				stopped = true
 			default:
