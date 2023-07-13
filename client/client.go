@@ -182,9 +182,7 @@ func (c *client) Exec(command *entities.Command) error {
 		logger.Debugf("failed to close connection: %s", err)
 	}
 
-	if !c.cfg.AutoExit {
-		fmt.Printf("exit code: %d\n", exitCode)
-	} else {
+	if c.cfg.AutoExit {
 		os.Exit(exitCode)
 	}
 
