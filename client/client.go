@@ -77,7 +77,7 @@ func New(cfg *Config) Client {
 }
 
 func (c *client) Connect() (err error) {
-	ready := make(chan struct{})
+	errCh := make(chan error)
 
 	u, err := url.Parse(c.cfg.Server)
 	if err != nil {
@@ -118,23 +118,6 @@ func (c *client) Connect() (err error) {
 		}
 	}(conn)
 
-	// auth request
-	go func() {
-		time.Sleep(10 * time.Millisecond)
-		authRequest := &entities.AuthRequest{
-			ClientID:     c.cfg.ClientID,
-			ClientSecret: c.cfg.ClientSecret,
-		}
-		message, err := json.Marshal(authRequest)
-		if err != nil {
-			logger.Errorf("failed to marshal auth request: %s", err)
-		}
-		err = conn.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageAuthRequest}, message...))
-		if err != nil {
-			logger.Errorf("failed to send auth request: %s", err)
-		}
-	}()
-
 	go func() {
 		for {
 			_, message, err := conn.ReadMessage()
@@ -165,16 +148,35 @@ func (c *client) Connect() (err error) {
 				c.exitCode <- int(message[1])
 			case entities.MessageAuthResponseFailure:
 				c.stderr.Write(message[1:])
-				c.exitCode <- 1
+				// c.exitCode <- 1
+				errCh <- &ExitError{
+					ExitCode: 1,
+					Message:  string(message[1:]),
+				}
 			case entities.MessageAuthResponseSuccess:
-				ready <- struct{}{}
+				errCh <- nil
 			}
 		}
 	}()
 
-	<-ready
+	// auth request
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		authRequest := &entities.AuthRequest{
+			ClientID:     c.cfg.ClientID,
+			ClientSecret: c.cfg.ClientSecret,
+		}
+		message, err := json.Marshal(authRequest)
+		if err != nil {
+			logger.Errorf("failed to marshal auth request: %s", err)
+		}
+		err = conn.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageAuthRequest}, message...))
+		if err != nil {
+			logger.Errorf("failed to send auth request: %s", err)
+		}
+	}()
 
-	return nil
+	return <-errCh
 }
 
 func (c *client) Exec(command *entities.Command) error {
