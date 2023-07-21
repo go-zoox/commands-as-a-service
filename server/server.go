@@ -27,6 +27,8 @@ type Config struct {
 	ClientSecret string `config:"client_secret"`
 	AuthService  string `config:"auth_service"`
 	//
+	MetadataDir string `config:"metadatadir"`
+	//
 	WorkDir string `config:"workdir"`
 	//
 	IsAutoCleanUserWorkDir bool `config:"is_auto_clean_user_workdir"`
@@ -46,31 +48,38 @@ type CommandConfig struct {
 }
 
 func (c *Config) GetCommandConfig(id string) (*CommandConfig, error) {
-	isNeedWrite := false
-	var baseDir string
+	var isNeedWrite bool
+	var oneMetadataDir string
 
-	if c.WorkDir == "" {
-		c.WorkDir = "/tmp/caas"
+	if c.MetadataDir == "" {
+		c.MetadataDir = "/tmp/gzcaas/metadata"
 	}
 
-	baseDir = fmt.Sprintf("%s/%s", c.WorkDir, id)
+	if c.WorkDir == "" {
+		c.WorkDir = "/tmp/gzcaas/workdir"
+	}
+
+	oneMetadataDir = fmt.Sprintf("%s/%s", c.MetadataDir, id)
+	oneWorkDir := fmt.Sprintf("%s/%s", c.WorkDir, id)
 	isNeedWrite = true
 
-	workDir := fmt.Sprintf("%s/work", baseDir)
-	if err := fs.Mkdirp(workDir); err != nil {
-		return nil, fmt.Errorf("failed to create workdir: %s", err)
+	if err := fs.Mkdirp(oneMetadataDir); err != nil {
+		return nil, fmt.Errorf("failed to create metadata dur: %s", err)
+	}
+	if err := fs.Mkdirp(oneWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to create work dir: %s", err)
 	}
 
 	return &CommandConfig{
-		WorkDir:   workDir,
-		Script:    &WriterFile{Path: fmt.Sprintf("%s/script", baseDir), IsNeedWrite: isNeedWrite},
-		Log:       &WriterFile{Path: fmt.Sprintf("%s/log", baseDir), IsNeedWrite: isNeedWrite},
-		Env:       &WriterFile{Path: fmt.Sprintf("%s/env", baseDir), IsNeedWrite: isNeedWrite},
-		StartAt:   &WriterFile{Path: fmt.Sprintf("%s/start_at", baseDir), IsNeedWrite: isNeedWrite},
-		SucceedAt: &WriterFile{Path: fmt.Sprintf("%s/succeed_at", baseDir), IsNeedWrite: isNeedWrite},
-		FailedAt:  &WriterFile{Path: fmt.Sprintf("%s/failed_at", baseDir), IsNeedWrite: isNeedWrite},
-		Status:    &WriterFile{Path: fmt.Sprintf("%s/status", baseDir), IsNeedWrite: isNeedWrite},
-		Error:     &WriterFile{Path: fmt.Sprintf("%s/error", baseDir), IsNeedWrite: isNeedWrite},
+		WorkDir:   oneWorkDir,
+		Script:    &WriterFile{Path: fmt.Sprintf("%s/script", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		Log:       &WriterFile{Path: fmt.Sprintf("%s/log", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		Env:       &WriterFile{Path: fmt.Sprintf("%s/env", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		StartAt:   &WriterFile{Path: fmt.Sprintf("%s/start_at", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		SucceedAt: &WriterFile{Path: fmt.Sprintf("%s/succeed_at", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		FailedAt:  &WriterFile{Path: fmt.Sprintf("%s/failed_at", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		Status:    &WriterFile{Path: fmt.Sprintf("%s/status", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		Error:     &WriterFile{Path: fmt.Sprintf("%s/error", oneMetadataDir), IsNeedWrite: isNeedWrite},
 	}, nil
 }
 
