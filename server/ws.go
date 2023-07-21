@@ -128,7 +128,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				cmdCfg, err := cfg.GetCommandConfig(client.ID)
+				cmdCfg, err := cfg.GetCommandConfig(client.ID, command)
 				if err != nil {
 					logger.Errorf("failed to get command config: %s", err)
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
@@ -150,6 +150,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				cmd.Dir = cmdCfg.WorkDir
+
 				// cmd.Env = []string{}
 				environment := map[string]string{
 					"HOME":    os.Getenv("HOME"),
