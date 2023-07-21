@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/fs"
 	"github.com/go-zoox/logger"
 	"github.com/go-zoox/zoox/defaults"
@@ -47,7 +48,7 @@ type CommandConfig struct {
 	Error     *WriterFile
 }
 
-func (c *Config) GetCommandConfig(id string) (*CommandConfig, error) {
+func (c *Config) GetCommandConfig(id string, command *entities.Command) (*CommandConfig, error) {
 	var isNeedWrite bool
 	var oneMetadataDir string
 
@@ -62,6 +63,10 @@ func (c *Config) GetCommandConfig(id string) (*CommandConfig, error) {
 	oneMetadataDir = fmt.Sprintf("%s/%s", c.MetadataDir, id)
 	oneWorkDir := fmt.Sprintf("%s/%s", c.WorkDir, id)
 	isNeedWrite = true
+
+	if command.WorkDirBase != "" {
+		oneWorkDir = fmt.Sprintf("%s/%s", command.WorkDirBase, id)
+	}
 
 	if err := fs.Mkdirp(oneMetadataDir); err != nil {
 		return nil, fmt.Errorf("failed to create metadata dur: %s", err)
