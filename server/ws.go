@@ -128,7 +128,11 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				cmdCfg, err := cfg.GetCommandConfig(client.ID, command)
+				id := client.ID
+				if command.ID != "" {
+					id = command.ID
+				}
+				cmdCfg, err := cfg.GetCommandConfig(id, command)
 				if err != nil {
 					logger.Errorf("failed to get command config: %s", err)
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
