@@ -69,7 +69,7 @@ func (c *Config) GetCommandConfig(id string, command *entities.Command) (*Comman
 	}
 
 	if err := fs.Mkdirp(oneMetadataDir); err != nil {
-		return nil, fmt.Errorf("failed to create metadata dur: %s", err)
+		return nil, fmt.Errorf("failed to create metadata dir: %s", err)
 	}
 	if err := fs.Mkdirp(oneWorkDir); err != nil {
 		return nil, fmt.Errorf("failed to create work dir: %s", err)

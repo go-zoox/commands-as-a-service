@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/go-zoox/core-utils/cast"
+	"github.com/go-zoox/logger"
 )
 
 func setCmdUser(cmd *exec.Cmd, username string) error {
@@ -13,6 +14,8 @@ func setCmdUser(cmd *exec.Cmd, username string) error {
 	if err != nil {
 		return err
 	}
+
+	logger.Infof("uid=%s,gid=%s", userX.Uid, userX.Gid)
 
 	uid := cast.ToInt(userX.Uid)
 	gid := cast.ToInt(userX.Gid)
@@ -22,6 +25,15 @@ func setCmdUser(cmd *exec.Cmd, username string) error {
 		Uid: uint32(uid),
 		Gid: uint32(gid),
 	}
+
+	cmd.Env = append(
+		cmd.Env,
+		"USER="+username,
+		"HOME="+userX.HomeDir,
+		"LOGNAME="+username,
+		"UID="+userX.Uid,
+		"GID="+userX.Gid,
+	)
 
 	return nil
 }
