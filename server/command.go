@@ -15,7 +15,7 @@ func setCmdUser(cmd *exec.Cmd, username string) error {
 		return err
 	}
 
-	logger.Infof("uid=%s,gid=%s", userX.Uid, userX.Gid)
+	logger.Infof("[command] uid=%s gid=%s", userX.Uid, userX.Gid)
 
 	uid := cast.ToInt(userX.Uid)
 	gid := cast.ToInt(userX.Gid)
