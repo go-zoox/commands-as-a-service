@@ -191,6 +191,15 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
 				cmd.Stderr = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr})
 
+				if command.User != "" {
+					if err := setCmdUser(cmd, command.User); err != nil {
+						logger.Errorf("failed to set user: %s", err)
+						client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
+						client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
+						return
+					}
+				}
+
 				logger.Infof("[command] start to run: %s", command.Script)
 				cmdCfg.Script.WriteString(command.Script)
 				cmdCfg.Env.WriteString(strings.Join(cmd.Env, "\n"))
