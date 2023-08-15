@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 
 	"github.com/go-zoox/commands-as-a-service/entities"
+	"github.com/go-zoox/core-utils/strings"
 	"github.com/go-zoox/logger"
 	"github.com/gorilla/websocket"
 )
@@ -21,6 +23,8 @@ type Client interface {
 	Connect() error
 	Exec(command *entities.Command) error
 	Close() error
+	//
+	Output(command *entities.Command) (response string, err error)
 }
 
 type ExitError struct {
@@ -211,6 +215,41 @@ func (c *client) Exec(command *entities.Command) error {
 	}
 }
 
+func (c *client) Output(command *entities.Command) (response string, err error) {
+	responseBuf := NewBufWriter()
+
+	c.stdout = responseBuf
+	c.stderr = responseBuf
+	if err = c.Exec(command); err != nil {
+		return
+	}
+
+	if err = c.Close(); err != nil {
+		return
+	}
+
+	return strings.TrimSpace(responseBuf.String()), nil
+}
+
 func (c *client) Close() error {
 	return c.conn.Close()
+}
+
+func NewBufWriter() *BufWriter {
+	return &BufWriter{
+		buf: &bytes.Buffer{},
+	}
+}
+
+type BufWriter struct {
+	io.Writer
+	buf *bytes.Buffer
+}
+
+func (w *BufWriter) Write(p []byte) (n int, err error) {
+	return w.buf.Write(p)
+}
+
+func (w *BufWriter) String() string {
+	return w.buf.String()
 }
