@@ -128,7 +128,11 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				cmdCfg, err := cfg.GetCommandConfig(client.ID)
+				id := client.ID
+				if command.ID != "" {
+					id = command.ID
+				}
+				cmdCfg, err := cfg.GetCommandConfig(id, command)
 				if err != nil {
 					logger.Errorf("failed to get command config: %s", err)
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
@@ -150,6 +154,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				cmd.Dir = cmdCfg.WorkDir
+
 				// cmd.Env = []string{}
 				environment := map[string]string{
 					"HOME":    os.Getenv("HOME"),
@@ -185,6 +190,16 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 
 				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
 				cmd.Stderr = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr})
+
+				if command.User != "" {
+					logger.Infof("[command] user: %s", command.User)
+					if err := setCmdUser(cmd, command.User); err != nil {
+						logger.Errorf("failed to set user(%s): %s", command.User, err)
+						client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to set user(%s): %s", command.User, err))...))
+						client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
+						return
+					}
+				}
 
 				logger.Infof("[command] start to run: %s", command.Script)
 				cmdCfg.Script.WriteString(command.Script)

@@ -184,12 +184,7 @@ func (c *client) Connect() (err error) {
 }
 
 func (c *client) Exec(command *entities.Command) error {
-	// command request
-	commandRequest := &entities.Command{
-		Script:      command.Script,
-		Environment: command.Environment,
-	}
-	message, err := json.Marshal(commandRequest)
+	message, err := json.Marshal(command)
 	if err != nil {
 		return &ExitError{
 			ExitCode: 1,
