@@ -139,6 +139,17 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
 					return
 				}
+				defer func() {
+					// @TODO clean workdir
+					if cfg.IsAutoCleanWorkDir {
+						if fs.IsExist(cmdCfg.WorkDir) {
+							logger.Infof("[command] clean work dir: %s", cmdCfg.WorkDir)
+							if err := fs.Remove(cmdCfg.WorkDir); err != nil {
+								panic(fmt.Errorf("failed to clean workdir(%s): %s", cmdCfg.WorkDir, err))
+							}
+						}
+					}
+				}()
 
 				if cfg.Shell == DefaultShell {
 					cmd = exec.Command(cfg.Shell, "-c", command.Script)
@@ -222,16 +233,6 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				client.WriteText([]byte{entities.MessageCommandExitCode, byte(0)})
-
-				// @TODO clean workdir
-				if cfg.IsAutoCleanUserWorkDir {
-					if fs.IsExist(cmdCfg.WorkDir) {
-						logger.Infof("[command] clean work dir: %s", cmdCfg.WorkDir)
-						if err := fs.Remove(cmdCfg.WorkDir); err != nil {
-							panic(fmt.Errorf("failed to clean workdir(%s): %s", cmdCfg.WorkDir, err))
-						}
-					}
-				}
 
 				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
 				cmdCfg.Status.WriteString("success")

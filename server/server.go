@@ -32,7 +32,7 @@ type Config struct {
 	//
 	WorkDir string `config:"workdir"`
 	//
-	IsAutoCleanUserWorkDir bool `config:"is_auto_clean_user_workdir"`
+	IsAutoCleanWorkDir bool `config:"is_auto_clean_workdir"`
 }
 
 // CommandConfig is the configuration of caas command
