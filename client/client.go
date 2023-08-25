@@ -216,7 +216,7 @@ func (c *client) Output(command *entities.Command) (response string, err error) 
 	c.stdout = responseBuf
 	c.stderr = responseBuf
 	if err = c.Exec(command); err != nil {
-		return
+		return strings.TrimSpace(responseBuf.String()), nil
 	}
 
 	if err = c.Close(); err != nil {
