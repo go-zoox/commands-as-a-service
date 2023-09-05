@@ -25,6 +25,8 @@ type Client interface {
 	Close() error
 	//
 	Output(command *entities.Command) (response string, err error)
+	//
+	TerminalURL() string
 }
 
 type ExitError struct {
@@ -228,6 +230,21 @@ func (c *client) Output(command *entities.Command) (response string, err error) 
 
 func (c *client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *client) TerminalURL(path ...string) string {
+	terminalPath := "/terminal"
+	if len(path) > 0 && path[0] != "" {
+		terminalPath = path[0]
+	}
+
+	u, err := url.Parse(c.cfg.Server)
+	if err != nil {
+		return ""
+	}
+
+	u.Path = terminalPath
+	return u.String()
 }
 
 func NewBufWriter() *BufWriter {
