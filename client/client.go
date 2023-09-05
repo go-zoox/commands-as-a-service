@@ -26,7 +26,7 @@ type Client interface {
 	//
 	Output(command *entities.Command) (response string, err error)
 	//
-	TerminalURL() string
+	TerminalURL(path ...string) string
 }
 
 type ExitError struct {
