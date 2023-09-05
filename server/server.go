@@ -7,7 +7,10 @@ import (
 	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/fs"
 	"github.com/go-zoox/logger"
+	"github.com/go-zoox/zoox"
 	"github.com/go-zoox/zoox/defaults"
+
+	terminal "github.com/go-zoox/terminal/server"
 )
 
 const DefaultShell = "sh"
@@ -36,6 +39,14 @@ type Config struct {
 	WorkDir string `config:"workdir"`
 	//
 	IsAutoCleanWorkDir bool `config:"is_auto_clean_workdir"`
+
+	// Terminal
+	TerminalEnabled        bool   `config:"terminal_enabled"`
+	TerminalPath           string `config:"terminal_path"`
+	TerminalShell          string `config:"terminal_shell"`
+	TerminalContainer      string `config:"terminal_container"`
+	TerminalContainerImage string `config:"terminal_container_image"`
+	TerminalInitCommand    string `config:"terminal_init_command"`
 }
 
 // CommandConfig is the configuration of caas command
@@ -163,6 +174,37 @@ func (s *server) Run() error {
 	app := defaults.Application()
 
 	app.WebSocket(s.cfg.Path, createWsService(s.cfg))
+
+	if s.cfg.TerminalEnabled {
+		app.WebSocket(s.cfg.TerminalPath, terminal.Serve(&terminal.Config{
+			Shell:       s.cfg.TerminalShell,
+			Container:   s.cfg.TerminalContainer,
+			Image:       s.cfg.TerminalContainerImage,
+			InitCommand: s.cfg.TerminalInitCommand,
+			Username:    s.cfg.ClientID,
+			Password:    s.cfg.ClientSecret,
+		}), func(ctx *zoox.Context) {
+			if s.cfg.ClientID == "" && s.cfg.ClientSecret == "" {
+				ctx.Next()
+				return
+			}
+
+			user, pass, ok := ctx.Request.BasicAuth()
+			fmt.Println("authorization:", ctx.Get("Authorization"), user, pass, ok)
+			if !ok {
+				ctx.Set("WWW-Authenticate", `Basic realm="go-zoox"`)
+				ctx.Status(401)
+				return
+			}
+
+			if !(user == s.cfg.ClientID && pass == s.cfg.ClientSecret) {
+				ctx.Status(401)
+				return
+			}
+
+			ctx.Next()
+		})
+	}
 
 	return app.Run(fmt.Sprintf("0.0.0.0:%d", s.cfg.Port))
 }
