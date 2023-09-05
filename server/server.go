@@ -19,7 +19,10 @@ type Server interface {
 
 // Config is the configuration of caas server
 type Config struct {
-	Port        int64             `config:"port,default=8838"`
+	Port int64 `config:"port,default=8838"`
+	//
+	Path string `config:"path"`
+	//
 	Shell       string            `config:"shell"`
 	Environment map[string]string `config:"environment"`
 	Timeout     int64             `config:"timeout"`
@@ -139,6 +142,14 @@ type server struct {
 
 // New creates a new caas server
 func New(cfg *Config) Server {
+	if cfg.Port == 0 {
+		cfg.Port = 8838
+	}
+
+	if cfg.Path == "" {
+		cfg.Path = "/"
+	}
+
 	if cfg.Shell == "" {
 		cfg.Shell = DefaultShell
 	}
@@ -151,7 +162,7 @@ func New(cfg *Config) Server {
 func (s *server) Run() error {
 	app := defaults.Application()
 
-	app.WebSocket("/", createWsService(s.cfg))
+	app.WebSocket(s.cfg.Path, createWsService(s.cfg))
 
 	return app.Run(fmt.Sprintf("0.0.0.0:%d", s.cfg.Port))
 }
