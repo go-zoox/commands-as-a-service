@@ -190,7 +190,6 @@ func (s *server) Run() error {
 			}
 
 			user, pass, ok := ctx.Request.BasicAuth()
-			fmt.Println("authorization:", ctx.Get("Authorization"), user, pass, ok)
 			if !ok {
 				ctx.Set("WWW-Authenticate", `Basic realm="go-zoox"`)
 				ctx.Status(401)
