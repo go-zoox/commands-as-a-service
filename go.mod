@@ -8,8 +8,8 @@ require (
 	github.com/go-zoox/fetch v1.7.16
 	github.com/go-zoox/fs v1.3.13
 	github.com/go-zoox/logger v1.4.5
-	github.com/go-zoox/terminal v1.3.6
-	github.com/go-zoox/zoox v1.12.6
+	github.com/go-zoox/terminal v1.3.8
+	github.com/go-zoox/zoox v1.12.7
 	github.com/gorilla/websocket v1.5.0
 )
 
@@ -44,7 +44,7 @@ require (
 	github.com/go-zoox/jsonrpc v1.2.2 // indirect
 	github.com/go-zoox/jwt v1.3.0 // indirect
 	github.com/go-zoox/kv v1.5.2 // indirect
-	github.com/go-zoox/proxy v1.5.2 // indirect
+	github.com/go-zoox/proxy v1.5.3 // indirect
 	github.com/go-zoox/pubsub v1.2.2 // indirect
 	github.com/go-zoox/random v1.0.4 // indirect
 	github.com/go-zoox/ratelimit v1.2.0 // indirect
