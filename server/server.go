@@ -41,12 +41,12 @@ type Config struct {
 	IsAutoCleanWorkDir bool `config:"is_auto_clean_workdir"`
 
 	// Terminal
-	TerminalEnabled        bool   `config:"terminal_enabled"`
-	TerminalPath           string `config:"terminal_path"`
-	TerminalShell          string `config:"terminal_shell"`
-	TerminalContainer      string `config:"terminal_container"`
-	TerminalContainerImage string `config:"terminal_container_image"`
-	TerminalInitCommand    string `config:"terminal_init_command"`
+	TerminalEnabled     bool   `config:"terminal_enabled"`
+	TerminalPath        string `config:"terminal_path"`
+	TerminalShell       string `config:"terminal_shell"`
+	TerminalDriver      string `config:"terminal_driver"`
+	TerminalDriverImage string `config:"terminal_driver_image"`
+	TerminalInitCommand string `config:"terminal_init_command"`
 }
 
 // CommandConfig is the configuration of caas command
@@ -178,8 +178,8 @@ func (s *server) Run() error {
 	if s.cfg.TerminalEnabled {
 		app.WebSocket(s.cfg.TerminalPath, terminal.Serve(&terminal.Config{
 			Shell:       s.cfg.TerminalShell,
-			Container:   s.cfg.TerminalContainer,
-			Image:       s.cfg.TerminalContainerImage,
+			Driver:      s.cfg.TerminalDriver,
+			DriverImage: s.cfg.TerminalDriverImage,
 			InitCommand: s.cfg.TerminalInitCommand,
 			Username:    s.cfg.ClientID,
 			Password:    s.cfg.ClientSecret,
