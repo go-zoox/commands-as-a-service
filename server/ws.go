@@ -216,8 +216,17 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				cmdCfg.Script.WriteString(command.Script)
 				cmdCfg.Env.WriteString(strings.Join(cmd.Env, "\n"))
 				cmdCfg.StartAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
-				err = cmd.Run()
-				if err != nil {
+
+				if err := cmd.Start(); err != nil {
+					logger.Errorf("[command] failed to start: %s", err)
+					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to start: %s\n", err))...))
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
+					return
+				}
+
+				cmdCfg.PID.WriteString(fmt.Sprintf("%d", cmd.Process.Pid))
+
+				if err := cmd.Wait(); err != nil {
 					if isKilledByDisconnect {
 						logger.Infof("[command] killed by disconnect: %s", command.Script)
 						return

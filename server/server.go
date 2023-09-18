@@ -53,6 +53,7 @@ type Config struct {
 type CommandConfig struct {
 	WorkDir   string
 	Script    *WriterFile
+	PID       *WriterFile
 	Log       *WriterFile
 	Env       *WriterFile
 	StartAt   *WriterFile
@@ -92,6 +93,7 @@ func (c *Config) GetCommandConfig(id string, command *entities.Command) (*Comman
 	return &CommandConfig{
 		WorkDir:   oneWorkDir,
 		Script:    &WriterFile{Path: fmt.Sprintf("%s/script", oneMetadataDir), IsNeedWrite: isNeedWrite},
+		PID:       &WriterFile{Path: fmt.Sprintf("%s/pid", oneMetadataDir), IsNeedWrite: isNeedWrite},
 		Log:       &WriterFile{Path: fmt.Sprintf("%s/log", oneMetadataDir), IsNeedWrite: isNeedWrite},
 		Env:       &WriterFile{Path: fmt.Sprintf("%s/env", oneMetadataDir), IsNeedWrite: isNeedWrite},
 		StartAt:   &WriterFile{Path: fmt.Sprintf("%s/start_at", oneMetadataDir), IsNeedWrite: isNeedWrite},
