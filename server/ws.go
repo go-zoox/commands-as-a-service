@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
+
+	// "os/exec"
 	"strings"
 	"time"
 
+	"github.com/go-zoox/command"
+	"github.com/go-zoox/command/errors"
 	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/datetime"
 	"github.com/go-zoox/fs"
@@ -34,9 +37,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 	authenticator := createAuthenticator(cfg)
 
 	return func(ctx *zoox.Context, client *websocket.Client) {
-		var cmd *exec.Cmd
+		var cmd command.Command
 		var authClient *entities.AuthRequest
-		var command *entities.Command
+		var commandN *entities.Command
 
 		isAuthenticated := false
 		stopped := false
@@ -68,8 +71,8 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 			if cmd != nil && !stopped {
 				isKilledByDisconnect = true
 
-				if cmd.Process != nil {
-					cmd.Process.Kill()
+				if cmd != nil {
+					cmd.Cancel()
 				}
 			}
 		}
@@ -118,9 +121,9 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					return
 				}
 
-				command = &entities.Command{}
+				commandN = &entities.Command{}
 				tmpScriptFilepath := ""
-				if err := json.Unmarshal(msg[1:], command); err != nil {
+				if err := json.Unmarshal(msg[1:], commandN); err != nil {
 					logger.Errorf("failed to unmarshal command request: %s", err)
 
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("invalid command request\n")...))
@@ -129,10 +132,10 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 				}
 
 				id := client.ID
-				if command.ID != "" {
-					id = command.ID
+				if commandN.ID != "" {
+					id = commandN.ID
 				}
-				cmdCfg, err := cfg.GetCommandConfig(id, command)
+				cmdCfg, err := cfg.GetCommandConfig(id, commandN)
 				if err != nil {
 					logger.Errorf("failed to get command config: %s", err)
 					client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte("internal server error\n")...))
@@ -151,22 +154,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					}
 				}()
 
-				if cfg.Shell == DefaultShell {
-					cmd = exec.Command(cfg.Shell, "-c", command.Script)
-				} else {
-					// file mode
-					tmpScriptFilepath = fs.TmpFilePath()
-					// logger.Infof("[script_mode: %s] tmp script filepath: %s", cfg.ScriptMode, tmpScriptFilepath)
-					if err := fs.WriteFile(tmpScriptFilepath, []byte(command.Script)); err != nil {
-						panic(fmt.Errorf("failed to write script file: %s", err))
-					}
-
-					cmd = exec.Command(cfg.Shell, tmpScriptFilepath)
-				}
-
-				cmd.Dir = cmdCfg.WorkDir
-
-				// cmd.Env = []string{}
+				env := []string{}
 				environment := map[string]string{
 					"HOME":    os.Getenv("HOME"),
 					"USER":    os.Getenv("USER"),
@@ -175,8 +163,8 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					"TERM":    os.Getenv("TERM"),
 					"PATH":    os.Getenv("PATH"),
 				}
-				if command.Environment != nil {
-					for k, v := range command.Environment {
+				if commandN.Environment != nil {
+					for k, v := range commandN.Environment {
 						environment[k] = v
 					}
 				}
@@ -186,40 +174,63 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					}
 				}
 				for k, v := range environment {
-					cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+					env = append(env, fmt.Sprintf("%s=%s", k, v))
+				}
+
+				if cfg.Shell == DefaultShell {
+					// cmd = exec.Command(cfg.Shell, "-c", command.Script)
+					cmd, err = command.New(&command.Config{
+						Command:     commandN.Script,
+						Shell:       cfg.Shell,
+						WorkDir:     cmdCfg.WorkDir,
+						Environment: environment,
+						User:        commandN.User,
+					})
+					if err != nil {
+						panic(fmt.Errorf("failed to create command (1): %s", err))
+					}
+				} else {
+					// file mode
+					tmpScriptFilepath = fs.TmpFilePath()
+					// logger.Infof("[script_mode: %s] tmp script filepath: %s", cfg.ScriptMode, tmpScriptFilepath)
+					if err := fs.WriteFile(tmpScriptFilepath, []byte(commandN.Script)); err != nil {
+						panic(fmt.Errorf("failed to write script file: %s", err))
+					}
+
+					// cmd = exec.Command(cfg.Shell, tmpScriptFilepath)
+					cmd, err = command.New(&command.Config{
+						Command: fmt.Sprintf("%s %s", cfg.Shell, commandN.Script),
+						// Shell:   cfg.Shell,
+						WorkDir:     cmdCfg.WorkDir,
+						Environment: environment,
+						User:        commandN.User,
+					})
+					if err != nil {
+						panic(fmt.Errorf("failed to create command (2): %s", err))
+					}
 				}
 
 				// timeout
 				var commandTimeoutTimer *time.Timer
 				if cfg.Timeout != 0 {
 					commandTimeoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
-						if cmd.Process != nil {
-							cmd.Process.Kill()
+						if cmd != nil {
+							cmd.Cancel()
 						}
 					})
 				}
 
-				cmd.Stdout = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout})
-				cmd.Stderr = io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr})
+				cmd.SetStdout(io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStdout}))
+				cmd.SetStderr(io.MultiWriter(cmdCfg.Log, &WSClientWriter{Client: client, Flag: entities.MessageCommandStderr}))
 
-				if command.User != "" {
-					logger.Infof("[command] user: %s", command.User)
-					if err := setCmdUser(cmd, command.User); err != nil {
-						logger.Errorf("failed to set user(%s): %s", command.User, err)
-						client.WriteText(append([]byte{entities.MessageCommandStderr}, []byte(fmt.Sprintf("failed to set user(%s): %s", command.User, err))...))
-						client.WriteText([]byte{entities.MessageCommandExitCode, byte(1)})
-						return
-					}
-				}
-
-				logger.Infof("[command] start to run: %s", command.Script)
-				cmdCfg.Script.WriteString(command.Script)
-				cmdCfg.Env.WriteString(strings.Join(cmd.Env, "\n"))
+				logger.Infof("[command] start to run: %s", commandN.Script)
+				cmdCfg.Script.WriteString(commandN.Script)
+				cmdCfg.Env.WriteString(strings.Join(env, "\n"))
 				cmdCfg.StartAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
 				err = cmd.Run()
 				if err != nil {
 					if isKilledByDisconnect {
-						logger.Infof("[command] killed by disconnect: %s", command.Script)
+						logger.Infof("[command] killed by disconnect: %s", commandN.Script)
 						return
 					}
 
@@ -227,8 +238,13 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					cmdCfg.Error.WriteString(err.Error())
 					cmdCfg.Status.WriteString("failure")
 
-					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", command.Script, err, cmd.ProcessState.ExitCode())
-					client.WriteText([]byte{entities.MessageCommandExitCode, byte(cmd.ProcessState.ExitCode())})
+					exitCode := -1
+					if errx, ok := err.(*errors.ExitError); ok {
+						exitCode = errx.ExitCode()
+					}
+
+					logger.Errorf("[command] failed to run: %s (err: %v, exit code: %d)", commandN.Script, err, exitCode)
+					client.WriteText([]byte{entities.MessageCommandExitCode, byte(exitCode)})
 					return
 				}
 
@@ -236,7 +252,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 
 				cmdCfg.SucceedAt.WriteString(datetime.Now().Format("YYYY-MM-DD HH:mm:ss"))
 				cmdCfg.Status.WriteString("success")
-				logger.Infof("[command] succeed to run: %s", command.Script)
+				logger.Infof("[command] succeed to run: %s", commandN.Script)
 
 				if tmpScriptFilepath != "" && fs.IsExist(tmpScriptFilepath) {
 					if err := fs.Remove(tmpScriptFilepath); err != nil {

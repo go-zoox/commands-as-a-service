@@ -3,11 +3,12 @@ module github.com/go-zoox/commands-as-a-service
 go 1.20
 
 require (
+	github.com/go-zoox/command v1.2.4
 	github.com/go-zoox/core-utils v1.2.14
 	github.com/go-zoox/datetime v1.2.2
 	github.com/go-zoox/fetch v1.7.16
 	github.com/go-zoox/fs v1.3.13
-	github.com/go-zoox/logger v1.4.5
+	github.com/go-zoox/logger v1.4.6
 	github.com/go-zoox/terminal v1.4.3
 	github.com/go-zoox/zoox v1.12.7
 	github.com/gorilla/websocket v1.5.0
@@ -19,8 +20,9 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v24.0.4+incompatible // indirect
+	github.com/distribution/reference v0.5.0 // indirect
+	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/docker/docker v24.0.6+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
