@@ -177,49 +177,21 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					env = append(env, fmt.Sprintf("%s=%s", k, v))
 				}
 
-				if cfg.Shell == DefaultShell {
-					// cmd = exec.Command(cfg.Shell, "-c", command.Script)
-					cmd, err = command.New(&command.Config{
-						Command:     commandN.Script,
-						Shell:       cfg.Shell,
-						WorkDir:     cmdCfg.WorkDir,
-						Environment: environment,
-						User:        commandN.User,
-						Engine:      commandN.Engine,
-						Image:       commandN.Image,
-						Memory:      commandN.Memory,
-						CPU:         commandN.CPU,
-						Platform:    commandN.Platform,
-						Network:     commandN.Network,
-					})
-					if err != nil {
-						panic(fmt.Errorf("failed to create command (1): %s", err))
-					}
-				} else {
-					// file mode
-					tmpScriptFilepath = fs.TmpFilePath()
-					// logger.Infof("[script_mode: %s] tmp script filepath: %s", cfg.ScriptMode, tmpScriptFilepath)
-					if err := fs.WriteFile(tmpScriptFilepath, []byte(commandN.Script)); err != nil {
-						panic(fmt.Errorf("failed to write script file: %s", err))
-					}
-
-					// cmd = exec.Command(cfg.Shell, tmpScriptFilepath)
-					cmd, err = command.New(&command.Config{
-						Command: fmt.Sprintf("%s %s", cfg.Shell, commandN.Script),
-						// Shell:   cfg.Shell,
-						WorkDir:     cmdCfg.WorkDir,
-						Environment: environment,
-						User:        commandN.User,
-						Engine:      commandN.Engine,
-						Image:       commandN.Image,
-						Memory:      commandN.Memory,
-						CPU:         commandN.CPU,
-						Platform:    commandN.Platform,
-						Network:     commandN.Network,
-					})
-					if err != nil {
-						panic(fmt.Errorf("failed to create command (2): %s", err))
-					}
+				cmd, err = command.New(&command.Config{
+					Command:     commandN.Script,
+					Shell:       cfg.Shell,
+					WorkDir:     cmdCfg.WorkDir,
+					Environment: environment,
+					User:        commandN.User,
+					Engine:      commandN.Engine,
+					Image:       commandN.Image,
+					Memory:      commandN.Memory,
+					CPU:         commandN.CPU,
+					Platform:    commandN.Platform,
+					Network:     commandN.Network,
+				})
+				if err != nil {
+					panic(fmt.Errorf("failed to create command (1): %s", err))
 				}
 
 				// timeout
