@@ -3,7 +3,7 @@ module github.com/go-zoox/commands-as-a-service
 go 1.20
 
 require (
-	github.com/go-zoox/command v1.2.4
+	github.com/go-zoox/command v1.2.6
 	github.com/go-zoox/core-utils v1.2.14
 	github.com/go-zoox/datetime v1.2.2
 	github.com/go-zoox/fetch v1.7.16
