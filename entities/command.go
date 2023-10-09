@@ -8,4 +8,11 @@ type Command struct {
 	WorkDirBase string            `json:"workdirbase"`
 	//
 	User string `json:"user"`
+	//
+	Engine   string  `json:"engine"`
+	Image    string  `json:"image"`
+	CPU      float64 `json:"cpu"`
+	Memory   int64   `json:"memory"`
+	Platform string  `json:"platform"`
+	Network  string  `json:"network"`
 }
