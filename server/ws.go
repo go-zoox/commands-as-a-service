@@ -185,6 +185,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 						WorkDir:     cmdCfg.WorkDir,
 						Environment: environment,
 						User:        commandN.User,
+						Engine:      commandN.Engine,
+						Image:       commandN.Image,
+						Memory:      commandN.Memory,
+						CPU:         commandN.CPU,
+						Platform:    commandN.Platform,
+						Network:     commandN.Network,
 					})
 					if err != nil {
 						panic(fmt.Errorf("failed to create command (1): %s", err))
@@ -204,6 +210,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 						WorkDir:     cmdCfg.WorkDir,
 						Environment: environment,
 						User:        commandN.User,
+						Engine:      commandN.Engine,
+						Image:       commandN.Image,
+						Memory:      commandN.Memory,
+						CPU:         commandN.CPU,
+						Platform:    commandN.Platform,
+						Network:     commandN.Network,
 					})
 					if err != nil {
 						panic(fmt.Errorf("failed to create command (2): %s", err))
