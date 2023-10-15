@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 
 	// "os/exec"
 	"strings"
@@ -156,12 +155,12 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 
 				env := []string{}
 				environment := map[string]string{
-					"HOME":    os.Getenv("HOME"),
-					"USER":    os.Getenv("USER"),
-					"LOGNAME": os.Getenv("LOGNAME"),
-					"SHELL":   cfg.Shell,
-					"TERM":    os.Getenv("TERM"),
-					"PATH":    os.Getenv("PATH"),
+					// "HOME":    os.Getenv("HOME"),
+					// "USER":    os.Getenv("USER"),
+					// "LOGNAME": os.Getenv("LOGNAME"),
+					// "SHELL":   cfg.Shell,
+					// "TERM":    os.Getenv("TERM"),
+					// "PATH":    os.Getenv("PATH"),
 				}
 				if commandN.Environment != nil {
 					for k, v := range commandN.Environment {
