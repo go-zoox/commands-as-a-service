@@ -189,6 +189,7 @@ func createWsService(cfg *Config) func(ctx *zoox.Context, client *websocket.Clie
 					CPU:         commandN.CPU,
 					Platform:    commandN.Platform,
 					Network:     commandN.Network,
+					Privileged:  commandN.Privileged,
 				})
 				if err != nil {
 					panic(fmt.Errorf("failed to create command (1): %s", err))

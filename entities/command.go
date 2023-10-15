@@ -9,10 +9,11 @@ type Command struct {
 	//
 	User string `json:"user"`
 	//
-	Engine   string  `json:"engine"`
-	Image    string  `json:"image"`
-	CPU      float64 `json:"cpu"`
-	Memory   int64   `json:"memory"`
-	Platform string  `json:"platform"`
-	Network  string  `json:"network"`
+	Engine     string  `json:"engine"`
+	Image      string  `json:"image"`
+	CPU        float64 `json:"cpu"`
+	Memory     int64   `json:"memory"`
+	Platform   string  `json:"platform"`
+	Network    string  `json:"network"`
+	Privileged bool    `json:"privileged"`
 }
