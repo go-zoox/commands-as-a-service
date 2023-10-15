@@ -1,4 +1,4 @@
 package caas
 
 // Version is the version of lighthouse
-var Version = "1.6.2"
+var Version = "1.6.3"
