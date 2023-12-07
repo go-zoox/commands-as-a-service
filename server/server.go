@@ -183,25 +183,27 @@ func (s *server) Run() error {
 			InitCommand: s.cfg.TerminalInitCommand,
 			Username:    s.cfg.ClientID,
 			Password:    s.cfg.ClientSecret,
-		}), func(ctx *zoox.Context) {
-			if s.cfg.ClientID == "" && s.cfg.ClientSecret == "" {
+		}), func(opt *zoox.WebSocketOption) {
+			opt.Middlewares = append(opt.Middlewares, func(ctx *zoox.Context) {
+				if s.cfg.ClientID == "" && s.cfg.ClientSecret == "" {
+					ctx.Next()
+					return
+				}
+
+				user, pass, ok := ctx.Request.BasicAuth()
+				if !ok {
+					ctx.Set("WWW-Authenticate", `Basic realm="go-zoox"`)
+					ctx.Status(401)
+					return
+				}
+
+				if !(user == s.cfg.ClientID && pass == s.cfg.ClientSecret) {
+					ctx.Status(401)
+					return
+				}
+
 				ctx.Next()
-				return
-			}
-
-			user, pass, ok := ctx.Request.BasicAuth()
-			if !ok {
-				ctx.Set("WWW-Authenticate", `Basic realm="go-zoox"`)
-				ctx.Status(401)
-				return
-			}
-
-			if !(user == s.cfg.ClientID && pass == s.cfg.ClientSecret) {
-				ctx.Status(401)
-				return
-			}
-
-			ctx.Next()
+			})
 		})
 	}
 
