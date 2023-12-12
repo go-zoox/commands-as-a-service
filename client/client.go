@@ -50,6 +50,8 @@ type Config struct {
 	//
 	Stdout io.Writer
 	Stderr io.Writer
+	//
+	ExecTimeout time.Duration `config:"exec_timeout"`
 }
 
 type client struct {
@@ -72,6 +74,10 @@ func New(cfg *Config) Client {
 	stderr := cfg.Stderr
 	if stderr == nil {
 		stderr = os.Stderr
+	}
+
+	if cfg.ExecTimeout == 0 {
+		cfg.ExecTimeout = 7 * 24 * time.Hour
 	}
 
 	return &client{
@@ -186,6 +192,12 @@ func (c *client) Connect() (err error) {
 }
 
 func (c *client) Exec(command *entities.Command) error {
+	go func() {
+		time.After(c.cfg.ExecTimeout)
+		c.stderr.Write([]byte("command exec timeout\n"))
+		c.exitCode <- 1
+	}()
+
 	message, err := json.Marshal(command)
 	if err != nil {
 		return &ExitError{
