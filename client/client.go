@@ -193,9 +193,10 @@ func (c *client) Connect() (err error) {
 
 func (c *client) Exec(command *entities.Command) error {
 	go func() {
-		time.After(c.cfg.ExecTimeout)
-		c.stderr.Write([]byte("command exec timeout\n"))
-		c.exitCode <- 1
+		time.AfterFunc(c.cfg.ExecTimeout, func() {
+			c.stderr.Write([]byte("command exec timeout\n"))
+			c.exitCode <- 1
+		})
 	}()
 
 	message, err := json.Marshal(command)
