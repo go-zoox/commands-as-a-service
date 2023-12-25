@@ -3,14 +3,14 @@ module github.com/go-zoox/commands-as-a-service
 go 1.20
 
 require (
-	github.com/go-zoox/command v1.3.0
-	github.com/go-zoox/core-utils v1.3.1
+	github.com/go-zoox/command v1.3.2
+	github.com/go-zoox/core-utils v1.3.2
 	github.com/go-zoox/datetime v1.2.2
-	github.com/go-zoox/fetch v1.7.16
+	github.com/go-zoox/fetch v1.8.1
 	github.com/go-zoox/fs v1.3.14
 	github.com/go-zoox/logger v1.4.6
 	github.com/go-zoox/terminal v1.6.1
-	github.com/go-zoox/zoox v1.12.37
+	github.com/go-zoox/zoox v1.12.41
 	github.com/gorilla/websocket v1.5.1
 )
 
@@ -30,13 +30,13 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/go-zoox/cache v1.0.6 // indirect
+	github.com/go-zoox/cache v1.0.7 // indirect
 	github.com/go-zoox/chalk v1.0.2 // indirect
 	github.com/go-zoox/compress v1.0.1 // indirect
 	github.com/go-zoox/concurrency v1.2.0 // indirect
 	github.com/go-zoox/cookie v1.2.0 // indirect
 	github.com/go-zoox/counter v1.2.1 // indirect
-	github.com/go-zoox/cron v1.2.0 // indirect
+	github.com/go-zoox/cron v1.2.1 // indirect
 	github.com/go-zoox/crypto v1.1.8 // indirect
 	github.com/go-zoox/debug v1.0.2 // indirect
 	github.com/go-zoox/encoding v1.2.1 // indirect
@@ -67,14 +67,14 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/redis/go-redis/v9 v9.3.0 // indirect
+	github.com/redis/go-redis/v9 v9.3.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/tidwall/gjson v1.17.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
