@@ -3,15 +3,16 @@ module github.com/go-zoox/commands-as-a-service
 go 1.20
 
 require (
-	github.com/go-zoox/command v1.3.2
-	github.com/go-zoox/core-utils v1.3.2
+	github.com/go-zoox/command v1.3.3
+	github.com/go-zoox/core-utils v1.3.4
 	github.com/go-zoox/datetime v1.2.2
 	github.com/go-zoox/fetch v1.8.1
 	github.com/go-zoox/fs v1.3.14
 	github.com/go-zoox/logger v1.4.6
-	github.com/go-zoox/terminal v1.6.1
-	github.com/go-zoox/zoox v1.12.41
-	github.com/gorilla/websocket v1.5.1
+	github.com/go-zoox/safe v1.0.1
+	github.com/go-zoox/terminal v1.6.4
+	github.com/go-zoox/websocket v0.0.5
+	github.com/go-zoox/zoox v1.13.1
 )
 
 require (
@@ -41,6 +42,7 @@ require (
 	github.com/go-zoox/debug v1.0.2 // indirect
 	github.com/go-zoox/encoding v1.2.1 // indirect
 	github.com/go-zoox/errors v1.0.2 // indirect
+	github.com/go-zoox/eventemitter v1.0.9 // indirect
 	github.com/go-zoox/gzip v1.0.0 // indirect
 	github.com/go-zoox/headers v1.0.8 // indirect
 	github.com/go-zoox/i18n v1.0.3 // indirect
@@ -53,13 +55,13 @@ require (
 	github.com/go-zoox/pubsub v1.2.2 // indirect
 	github.com/go-zoox/random v1.0.4 // indirect
 	github.com/go-zoox/ratelimit v1.2.1 // indirect
-	github.com/go-zoox/safe v1.0.1 // indirect
 	github.com/go-zoox/session v1.2.0 // indirect
-	github.com/go-zoox/tag v1.2.3 // indirect
+	github.com/go-zoox/tag v1.2.5 // indirect
 	github.com/go-zoox/uuid v0.0.1 // indirect
 	github.com/goccy/go-yaml v1.11.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/moby/term v0.5.0 // indirect
@@ -83,9 +85,3 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// replace github.com/go-zoox/fetch => ../fetch
-// replace github.com/go-zoox/zoox => ../zoox
-
-// replace github.com/go-zoox/logger => ../logger
-// replace github.com/go-zoox/fs => ../fs

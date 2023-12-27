@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -15,7 +14,8 @@ import (
 	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/core-utils/strings"
 	"github.com/go-zoox/logger"
-	"github.com/gorilla/websocket"
+	"github.com/go-zoox/safe"
+	"github.com/go-zoox/websocket"
 )
 
 // Client is the interface of caas client
@@ -62,6 +62,12 @@ type client struct {
 	//
 	stdout io.Writer
 	stderr io.Writer
+	//
+	closeCh chan struct{}
+	//
+	messageCh chan []byte
+	//
+	errCh chan error
 }
 
 // New creates a new caas client
@@ -85,12 +91,13 @@ func New(cfg *Config) Client {
 		exitCode: make(chan int),
 		stdout:   stdout,
 		stderr:   stderr,
+		//
+		messageCh: make(chan []byte),
+		errCh:     make(chan error),
 	}
 }
 
 func (c *client) Connect() (err error) {
-	errCh := make(chan error)
-
 	u, err := url.Parse(c.cfg.Server)
 	if err != nil {
 		return fmt.Errorf("invalid caas server address: %s", err)
@@ -98,97 +105,98 @@ func (c *client) Connect() (err error) {
 	logger.Debugf("connecting to %s", u.String())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	conn, response, err := websocket.DefaultDialer.DialContext(ctx, u.String(), nil)
+	wc, err := websocket.NewClient(func(opt *websocket.ClientOption) {
+		opt.Context = ctx
+		opt.Addr = u.String()
+	})
 	if err != nil {
-		if response == nil || response.Body == nil {
-			cancel()
-			return fmt.Errorf("failed to connect at %s (error: %s)", u.String(), err)
-		}
-
-		body, errB := ioutil.ReadAll(response.Body)
-		if errB != nil {
-			cancel()
-			return fmt.Errorf("failed to connect at %s (status: %s, error: %s)", u.String(), response.Status, err)
-		}
-
 		cancel()
-		return fmt.Errorf("failed to connect at %s (status: %d, response: %s, error: %v)", u.String(), response.StatusCode, string(body), err)
+		return err
 	}
-	c.conn = conn
-	cancel()
 
-	// heart beat
-	go func(c *websocket.Conn) {
-		for {
-			time.Sleep(3 * time.Second)
+	wc.OnConnect(func(conn websocket.Conn) error {
+		cancel()
 
-			logger.Debugf("ping")
-			if err := c.WriteMessage(websocket.TextMessage, []byte{entities.MessagePing}); err != nil {
-				logger.Debugf("failed to send ping: %s", err)
-				return
+		// close
+		go func() {
+			<-c.closeCh
+			conn.Close()
+		}()
+
+		// heart beat
+		go func() {
+			for {
+				time.Sleep(3 * time.Second)
+
+				logger.Debugf("ping")
+				if err := conn.WriteTextMessage([]byte{entities.MessagePing}); err != nil {
+					logger.Debugf("failed to send ping: %s", err)
+					return
+				}
 			}
-		}
-	}(conn)
+		}()
 
-	go func() {
-		for {
-			_, message, err := conn.ReadMessage()
+		// auth request
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			authRequest := &entities.AuthRequest{
+				ClientID:     c.cfg.ClientID,
+				ClientSecret: c.cfg.ClientSecret,
+			}
+			message, err := json.Marshal(authRequest)
 			if err != nil {
-				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					return
-				}
-
-				if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-					return
-				}
-
-				if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-					return
-				}
-
-				logger.Debugf("failed to receive command response: %s", err)
-				// os.Exit(1)
-				return
+				logger.Errorf("failed to marshal auth request: %s", err)
 			}
-
-			switch message[0] {
-			case entities.MessageCommandStdout:
-				c.stdout.Write(message[1:])
-			case entities.MessageCommandStderr:
-				c.stderr.Write(message[1:])
-			case entities.MessageCommandExitCode:
-				c.exitCode <- int(message[1])
-			case entities.MessageAuthResponseFailure:
-				c.stderr.Write(message[1:])
-				// c.exitCode <- 1
-				errCh <- &ExitError{
-					ExitCode: 1,
-					Message:  string(message[1:]),
-				}
-			case entities.MessageAuthResponseSuccess:
-				errCh <- nil
+			err = conn.WriteTextMessage(append([]byte{entities.MessageAuthRequest}, message...))
+			if err != nil {
+				logger.Errorf("failed to send auth request: %s", err)
 			}
-		}
-	}()
+		}()
 
-	// auth request
-	go func() {
-		time.Sleep(10 * time.Millisecond)
-		authRequest := &entities.AuthRequest{
-			ClientID:     c.cfg.ClientID,
-			ClientSecret: c.cfg.ClientSecret,
-		}
-		message, err := json.Marshal(authRequest)
-		if err != nil {
-			logger.Errorf("failed to marshal auth request: %s", err)
-		}
-		err = conn.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageAuthRequest}, message...))
-		if err != nil {
-			logger.Errorf("failed to send auth request: %s", err)
-		}
-	}()
+		go func() {
+			for {
+				select {
+				case msg := <-c.messageCh:
+					if err := conn.WriteTextMessage(msg); err != nil {
+						logger.Errorf("failed to send message: %s", err)
+						return
+					}
+				}
+			}
+		}()
 
-	return <-errCh
+		return nil
+	})
+
+	wc.OnTextMessage(func(conn websocket.Conn, message []byte) error {
+		switch message[0] {
+		case entities.MessageCommandStdout:
+			c.stdout.Write(message[1:])
+		case entities.MessageCommandStderr:
+			c.stderr.Write(message[1:])
+		case entities.MessageCommandExitCode:
+			c.exitCode <- int(message[1])
+		case entities.MessageAuthResponseFailure:
+			c.stderr.Write(message[1:])
+			// c.exitCode <- 1
+			c.errCh <- &ExitError{
+				ExitCode: 1,
+				Message:  string(message[1:]),
+			}
+		case entities.MessageAuthResponseSuccess:
+			c.errCh <- nil
+		default:
+			logger.Errorf("unknown message type: %d", message[0])
+		}
+
+		return nil
+	})
+
+	if err := wc.Connect(); err != nil {
+		return err
+	}
+
+	return
 }
 
 func (c *client) Exec(command *entities.Command) error {
@@ -206,13 +214,8 @@ func (c *client) Exec(command *entities.Command) error {
 			Message:  fmt.Sprintf("failed to marshal command request: %s", err),
 		}
 	}
-	err = c.conn.WriteMessage(websocket.TextMessage, append([]byte{entities.MessageCommand}, message...))
-	if err != nil {
-		return &ExitError{
-			ExitCode: 1,
-			Message:  fmt.Sprintf("failed to send command request: %s", err),
-		}
-	}
+
+	c.messageCh <- append([]byte{entities.MessageCommand}, message...)
 
 	exitCode := <-c.exitCode
 
@@ -242,7 +245,11 @@ func (c *client) Output(command *entities.Command) (response string, err error) 
 }
 
 func (c *client) Close() error {
-	return c.conn.Close()
+	return safe.Do(func() error {
+		c.closeCh <- struct{}{}
+		close(c.closeCh)
+		return nil
+	})
 }
 
 func (c *client) TerminalURL(path ...string) string {

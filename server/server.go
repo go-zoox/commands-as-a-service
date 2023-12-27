@@ -7,10 +7,10 @@ import (
 	"github.com/go-zoox/commands-as-a-service/entities"
 	"github.com/go-zoox/fs"
 	"github.com/go-zoox/logger"
+	terminal "github.com/go-zoox/terminal/server"
+	"github.com/go-zoox/websocket"
 	"github.com/go-zoox/zoox"
 	"github.com/go-zoox/zoox/defaults"
-
-	terminal "github.com/go-zoox/terminal/server"
 )
 
 const DefaultShell = "sh"
@@ -173,17 +173,33 @@ func New(cfg *Config) Server {
 func (s *server) Run() error {
 	app := defaults.Application()
 
-	app.WebSocket(s.cfg.Path, createWsService(s.cfg))
+	wsServer, err := websocket.NewServer()
+	if err != nil {
+		return err
+	}
+
+	createWsService(s.cfg)(wsServer)
+
+	app.WebSocket(s.cfg.Path, func(opt *zoox.WebSocketOption) {
+		opt.Server = wsServer
+	})
 
 	if s.cfg.TerminalEnabled {
-		app.WebSocket(s.cfg.TerminalPath, terminal.Serve(&terminal.Config{
+		server, err := terminal.Serve(&terminal.Config{
 			Shell:       s.cfg.TerminalShell,
 			Driver:      s.cfg.TerminalDriver,
 			DriverImage: s.cfg.TerminalDriverImage,
 			InitCommand: s.cfg.TerminalInitCommand,
 			Username:    s.cfg.ClientID,
 			Password:    s.cfg.ClientSecret,
-		}), func(opt *zoox.WebSocketOption) {
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create terminal server: %s", err)
+		}
+
+		app.WebSocket(s.cfg.TerminalPath, func(opt *zoox.WebSocketOption) {
+			opt.Server = server
+
 			opt.Middlewares = append(opt.Middlewares, func(ctx *zoox.Context) {
 				if s.cfg.ClientID == "" && s.cfg.ClientSecret == "" {
 					ctx.Next()
