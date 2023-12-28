@@ -78,11 +78,7 @@ func createWsService(cfg *Config) func(server websocket.Server) {
 		server.OnClose(func(conn conn.Conn) error {
 			logger.Debugf("[ws][id: %s] Close", conn.ID())
 
-			v, err := conn.Get("state")
-			if err != nil {
-				return err
-			}
-			data, ok := v.(*ConnData)
+			data, ok := conn.Get("state").(*ConnData)
 			if !ok {
 				return fmt.Errorf("failed to get state")
 			}
@@ -107,11 +103,7 @@ func createWsService(cfg *Config) func(server websocket.Server) {
 				}
 			}()
 
-			v, err := conn.Get("state")
-			if err != nil {
-				return err
-			}
-			data, ok := v.(*ConnData)
+			data, ok := conn.Get("state").(*ConnData)
 			if !ok {
 				return fmt.Errorf("failed to get state")
 			}

@@ -4,15 +4,15 @@ go 1.20
 
 require (
 	github.com/go-zoox/command v1.3.3
-	github.com/go-zoox/core-utils v1.3.4
+	github.com/go-zoox/core-utils v1.3.5
 	github.com/go-zoox/datetime v1.2.2
 	github.com/go-zoox/fetch v1.8.1
 	github.com/go-zoox/fs v1.3.14
 	github.com/go-zoox/logger v1.4.6
 	github.com/go-zoox/safe v1.0.1
-	github.com/go-zoox/terminal v1.6.4
-	github.com/go-zoox/websocket v0.0.5
-	github.com/go-zoox/zoox v1.13.1
+	github.com/go-zoox/terminal v1.6.5
+	github.com/go-zoox/websocket v0.0.6
+	github.com/go-zoox/zoox v1.13.2
 )
 
 require (
@@ -56,7 +56,7 @@ require (
 	github.com/go-zoox/random v1.0.4 // indirect
 	github.com/go-zoox/ratelimit v1.2.1 // indirect
 	github.com/go-zoox/session v1.2.0 // indirect
-	github.com/go-zoox/tag v1.2.5 // indirect
+	github.com/go-zoox/tag v1.2.6 // indirect
 	github.com/go-zoox/uuid v0.0.1 // indirect
 	github.com/goccy/go-yaml v1.11.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
