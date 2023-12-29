@@ -94,6 +94,7 @@ func New(cfg *Config) Client {
 		//
 		messageCh: make(chan []byte),
 		errCh:     make(chan error),
+		closeCh:   make(chan struct{}),
 	}
 }
 
