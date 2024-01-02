@@ -55,8 +55,7 @@ type Config struct {
 }
 
 type client struct {
-	conn *websocket.Conn
-	cfg  *Config
+	cfg *Config
 	//
 	exitCode chan int
 	//
@@ -67,7 +66,7 @@ type client struct {
 	//
 	messageCh chan []byte
 	//
-	errCh chan error
+	authCh chan struct{}
 }
 
 // New creates a new caas client
@@ -93,7 +92,7 @@ func New(cfg *Config) Client {
 		stderr:   stderr,
 		//
 		messageCh: make(chan []byte),
-		errCh:     make(chan error),
+		authCh:    make(chan struct{}),
 		closeCh:   make(chan struct{}),
 	}
 }
@@ -115,6 +114,26 @@ func (c *client) Connect() (err error) {
 		return err
 	}
 
+	wc.OnTextMessage(func(conn websocket.Conn, message []byte) error {
+		switch message[0] {
+		case entities.MessageCommandStdout:
+			c.stdout.Write(message[1:])
+		case entities.MessageCommandStderr:
+			c.stderr.Write(message[1:])
+		case entities.MessageCommandExitCode:
+			c.exitCode <- int(message[1])
+		case entities.MessageAuthResponseFailure:
+			c.stderr.Write(message[1:])
+			c.exitCode <- 1
+		case entities.MessageAuthResponseSuccess:
+			c.authCh <- struct{}{}
+		default:
+			logger.Errorf("unknown message type: %d", message[0])
+		}
+
+		return nil
+	})
+
 	wc.OnConnect(func(conn websocket.Conn) error {
 		cancel()
 
@@ -122,19 +141,6 @@ func (c *client) Connect() (err error) {
 		go func() {
 			<-c.closeCh
 			conn.Close()
-		}()
-
-		// heart beat
-		go func() {
-			for {
-				time.Sleep(3 * time.Second)
-
-				logger.Debugf("ping")
-				if err := conn.WriteTextMessage([]byte{entities.MessagePing}); err != nil {
-					logger.Debugf("failed to send ping: %s", err)
-					return
-				}
-			}
 		}()
 
 		// auth request
@@ -154,6 +160,22 @@ func (c *client) Connect() (err error) {
 			}
 		}()
 
+		<-c.authCh
+
+		// heart beat
+		go func() {
+			for {
+				time.Sleep(3 * time.Second)
+
+				logger.Debugf("ping")
+				if err := conn.WriteTextMessage([]byte{entities.MessagePing}); err != nil {
+					logger.Debugf("failed to send ping: %s", err)
+					return
+				}
+			}
+		}()
+
+		// send message
 		go func() {
 			for {
 				select {
@@ -165,30 +187,6 @@ func (c *client) Connect() (err error) {
 				}
 			}
 		}()
-
-		return nil
-	})
-
-	wc.OnTextMessage(func(conn websocket.Conn, message []byte) error {
-		switch message[0] {
-		case entities.MessageCommandStdout:
-			c.stdout.Write(message[1:])
-		case entities.MessageCommandStderr:
-			c.stderr.Write(message[1:])
-		case entities.MessageCommandExitCode:
-			c.exitCode <- int(message[1])
-		case entities.MessageAuthResponseFailure:
-			c.stderr.Write(message[1:])
-			// c.exitCode <- 1
-			c.errCh <- &ExitError{
-				ExitCode: 1,
-				Message:  string(message[1:]),
-			}
-		case entities.MessageAuthResponseSuccess:
-			c.errCh <- nil
-		default:
-			logger.Errorf("unknown message type: %d", message[0])
-		}
 
 		return nil
 	})

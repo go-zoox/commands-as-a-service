@@ -11,8 +11,8 @@ require (
 	github.com/go-zoox/logger v1.4.6
 	github.com/go-zoox/safe v1.0.1
 	github.com/go-zoox/terminal v1.6.5
-	github.com/go-zoox/websocket v0.0.6
-	github.com/go-zoox/zoox v1.13.2
+	github.com/go-zoox/websocket v0.0.8
+	github.com/go-zoox/zoox v1.13.3
 )
 
 require (
