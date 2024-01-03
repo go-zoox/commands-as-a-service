@@ -75,8 +75,8 @@ func createWsService(cfg *Config) func(server websocket.Server) {
 			return nil
 		})
 
-		server.OnClose(func(conn conn.Conn) error {
-			logger.Debugf("[ws][id: %s] Close", conn.ID())
+		server.OnClose(func(conn conn.Conn, code int, message string) error {
+			logger.Debugf("[ws][id: %s] Close (code: %d, message: %s)", conn.ID(), code, message)
 
 			data, ok := conn.Get("state").(*ConnData)
 			if !ok {
