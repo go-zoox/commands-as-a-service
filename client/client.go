@@ -114,6 +114,12 @@ func (c *client) Connect() (err error) {
 		return err
 	}
 
+	wc.OnClose(func(conn websocket.Conn, code int, message string) error {
+		c.stderr.Write([]byte(fmt.Sprintf("connection closed from server: %s\n", message)))
+		c.exitCode <- 1
+		return nil
+	})
+
 	wc.OnTextMessage(func(conn websocket.Conn, message []byte) error {
 		switch message[0] {
 		case entities.MessageCommandStdout:
